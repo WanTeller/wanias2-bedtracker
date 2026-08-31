@@ -39,30 +39,35 @@ git push -u origin main
    The $5 trial starts with **no credit card**.
 2. Railway reads `railway.json`, installs the packages, runs `./build.sh`, and
    starts `gunicorn`. First build ≈ 2–4 min.
-3. Open the service → **Variables** tab → add:
+3. Service → **Settings → Networking → Generate Domain** → you get a URL like
+   **`https://web-production-xxxx.up.railway.app`**.
+4. Service → **Variables** tab → add these. The admin account and demo data are
+   created automatically on the next build (the Railway "Console" shell can't
+   run `manage.py`, so we bootstrap during the build instead):
 
    | Variable | Value |
    |---|---|
    | `BEDTRACKER_DEBUG` | `false` |
-   | `BEDTRACKER_SECRET_KEY` | a long random string *(generate: see A5)* |
+   | `BEDTRACKER_SECRET_KEY` | a long random string *(generate: A5)* |
    | `DATABASE_URL` | the Neon connection string from A2 |
+   | `DJANGO_SUPERUSER_USERNAME` | your email |
+   | `DJANGO_SUPERUSER_EMAIL` | your email (same) |
+   | `DJANGO_SUPERUSER_PASSWORD` | a password for the admin account |
+   | `BEDTRACKER_SEED_DEMO` | `true` |
 
-4. Service → **Settings → Networking → Generate Domain**. You get a URL like
-   **`https://wanias2-bedtracker-production.up.railway.app`**.
-5. Railway redeploys automatically after the variable changes. The first build
-   (before you added the variables) ran on a throwaway database; this redeploy
-   uses Neon.
+5. Railway redeploys automatically. Watch **Deployments → View logs** until
+   "Deployment successful". The build log will show `Superuser created` and the
+   demo data loading.
+6. **After that first good deploy, delete `DJANGO_SUPERUSER_PASSWORD`** (and
+   optionally the other two `DJANGO_SUPERUSER_*` and `BEDTRACKER_SEED_DEMO`) so
+   the password isn't sitting in the variables list. The account stays.
 
-### A4. Admin account
-Railway service → the **⋮ menu → "Terminal"** (or install the Railway CLI and
-`railway run`), then:
+### A4. Log in
+Open your Railway URL → log in with the superuser email + password. `/admin/`
+on that URL is your developer console.
 
-```
-python manage.py createsuperuser
-python manage.py seed_demo      # optional: task categories + demo data
-```
-
-Log in at `https://<your-url>/admin/`.
+To add more admins later, or reset the demo data, use `/admin/` or add the
+`DJANGO_SUPERUSER_*` / `BEDTRACKER_SEED_DEMO` variables again and redeploy.
 
 ### A5. Generate a secret key
 
