@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<header class="topbar">
+  <div class="topbar-left">
+    <a class="hamburger" href="{% url 'activity' %}" aria-label="Ward activity">&#9776;</a>
+    <div>
+      <h1>{{ app_name }}</h1>
+      <p class="subtitle">{{ app_subtitle }} &middot; {{ ward.bed_count }} beds</p>
+    </div>
+  </div>
+  <div class="topbar-user">
+    <span class="who">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email }}</span>
+    {% if not simple_login %}
+    <a href="{% url 'password_change' %}" title="Change password">Password</a>
+    {% endif %}
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="linkbtn">{% if simple_login %}Switch name{% else %}Log out{% endif %}</button>
+    </form>
+  </div>
+</header>
+
+{% include "board/_summary.html" %}
+
+<form class="search" method="get" action="{% url 'board' %}">
+  <input type="search" name="q" value="{{ query }}"
+         placeholder="Search patients, tasks, notes…" autocomplete="off">
+  {% if query %}<a class="search-clear" href="{% url 'board' %}">Clear</a>{% endif %}
+</form>
+
+{% if search %}
+  {% include "board/_search_results.html" %}
+{% else %}
+  {% include "board/_chips.html" %}
+  <main class="bed-list">
+    {% for bed in beds %}
+      {% include "board/_bed_card.html" %}
+    {% empty %}
+      <p class="hint">No beds match this filter.</p>
+    {% endfor %}
+  </main>
+{% endif %}
+
+{% if selected_bed %}{% include "board/_panel.html" %}{% endif %}
+{% if sidebar_open %}{% include "board/_sidebar.html" %}{% endif %}
+
+{% endblock %}

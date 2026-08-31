@@ -1,0 +1,82 @@
+{% comment %}
+One category "slot". Context: slot, selected_bed, open_key, editing_task_id.
+- "unassigned": always open, no add controls (use the top "+ Add Task").
+- a plain slot with no presets and no custom box: a flat checkbox row.
+- everything else: a <details> that is collapsed by default.
+{% endcomment %}
+{% with cat=slot.category %}
+
+{% if not cat.allow_custom and not cat.options.all and cat.key != "unassigned" %}
+{# --- flat single row (e.g. Receiving Notes) --- #}
+<div class="slot flat">
+  <div class="slot-head">
+    <input type="checkbox" class="slot-tick" {% if slot.checked %}checked{% endif %}
+           title="Ticked = to do. Untick when done."
+           hx-post="{% url 'slot_toggle' selected_bed.id cat.key %}"
+           hx-target="#tasks-panel" hx-swap="innerHTML">
+    <span class="slot-name {% if slot.cleared %}ticked{% endif %}">{{ cat.name }}</span>
+    {% if slot.open_count %}<span class="slot-counter">{{ slot.open_count }}</span>{% endif %}
+  </div>
+  {% for task in slot.open_tasks %}<div class="slot-body">{% include "board/_task_row.html" %}</div>{% endfor %}
+</div>
+
+{% else %}
+<details class="slot"
+         {% if cat.key == open_key or cat.key == "unassigned" %}open{% endif %}>
+  <summary class="slot-head">
+    <input type="checkbox" class="slot-tick" {% if slot.checked %}checked{% endif %}
+           title="Ticked = to do. Untick when done."
+           onclick="event.stopPropagation()"
+           hx-post="{% url 'slot_toggle' selected_bed.id cat.key %}"
+           hx-target="#tasks-panel" hx-swap="innerHTML">
+    <span class="slot-name {% if slot.cleared %}ticked{% endif %}">{{ cat.name }}</span>
+    {% if slot.open_count %}
+      <span class="slot-counter {% if slot.overdue_count %}danger{% endif %}"
+            {% if slot.overdue_count %}title="{{ slot.overdue_count }} overdue"{% endif %}>
+        {{ slot.open_count }}
+      </span>
+    {% endif %}
+  </summary>
+
+  <div class="slot-body">
+    {% for task in slot.open_tasks %}{% include "board/_task_row.html" %}{% endfor %}
+    {% for task in slot.done_tasks %}{% include "board/_task_row.html" %}{% endfor %}
+
+    {% if cat.options.all %}
+    <div class="option-chips">
+      {% for opt in cat.options.all %}
+      <span class="chip-wrap">
+        <form hx-post="{% url 'task_add' selected_bed.id %}"
+              hx-target="#tasks-panel" hx-swap="innerHTML"
+              hx-disabled-elt="find button">
+          <input type="hidden" name="category_key" value="{{ cat.key }}">
+          <input type="hidden" name="option_id" value="{{ opt.id }}">
+          <button type="submit" class="chip-btn">{{ opt.label }}</button>
+        </form>
+        {% if opt.is_custom %}
+        <form hx-post="{% url 'option_delete' opt.id %}"
+              hx-target="#tasks-panel" hx-swap="innerHTML">
+          <input type="hidden" name="bed_id" value="{{ selected_bed.id }}">
+          <button type="submit" class="chip-x" title="Remove this button">&times;</button>
+        </form>
+        {% endif %}
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if cat.allow_custom %}
+    <form class="custom-add"
+          hx-post="{% url 'option_add' cat.key %}"
+          hx-target="#tasks-panel" hx-swap="innerHTML" hx-disabled-elt="find button">
+      <input type="hidden" name="bed_id" value="{{ selected_bed.id }}">
+      <input type="text" name="label" autocomplete="off"
+             placeholder="+ Add custom option">
+      <button type="submit" class="btn small">Add</button>
+    </form>
+    {% endif %}
+  </div>
+</details>
+{% endif %}
+
+{% endwith %}

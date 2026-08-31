@@ -1,0 +1,10 @@
+{% comment %}
+The reply to an HTMX task action:
+  - the tasks panel (swapped into #tasks-panel)
+  - out-of-band refreshes for the summary counts, the chip bar and this bed's card
+'oob' is True in context, so those three partials add hx-swap-oob="true".
+{% endcomment %}
+{% include "board/_tasks.html" %}
+{% include "board/_summary.html" %}
+{% include "board/_chips.html" %}
+{% include "board/_bed_card.html" with bed=oob_bed %}

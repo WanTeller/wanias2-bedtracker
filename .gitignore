@@ -1,0 +1,37 @@
+# Virtual environment
+.venv/
+
+# Django database (sample/real data - keep it off git)
+db.sqlite3
+db.sqlite3-wal
+db.sqlite3-shm
+*.sqlite3
+*.sqlite3.broken
+
+# Local settings / secrets
+.env
+backup/backup.env
+
+# Local backups - never in git
+backup/*.gz
+backup/*.dump
+backup/*.sqlite3
+backup/manifest.json
+backup/backup.log
+backup/backup.log.*
+
+# collectstatic output
+staticfiles/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# deployment
+staticfiles/
+.env.prod

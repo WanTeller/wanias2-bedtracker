@@ -1,0 +1,25 @@
+{% extends "accounts/_auth_base.html" %}
+{% block heading %}Log in{% endblock %}
+
+{% block body %}
+<form method="post">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="field-error">{{ form.non_field_errors|striptags }}</div>
+  {% endif %}
+  {% for field in form %}
+  <div class="field">
+    {{ field.label_tag }}
+    {{ field }}
+    {% if field.errors %}<div class="field-error">{{ field.errors|striptags }}</div>{% endif %}
+  </div>
+  {% endfor %}
+  <input type="hidden" name="next" value="{{ next }}">
+  <button type="submit" class="btn primary">Log in</button>
+</form>
+
+<p class="auth-links">
+  <a href="{% url 'password_reset' %}">Forgot password?</a>
+  &middot; New here? <a href="{% url 'signup' %}">Create an account</a>
+</p>
+{% endblock %}

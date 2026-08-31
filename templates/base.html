@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{{ app_name|default:"Ward Board" }}{% endblock %}</title>
+  <meta name="description" content="{{ app_subtitle|default:'Surgical ward board' }}">
+
+  {# ?v=N is a cache-buster - bump it whenever board.css changes #}
+  <link rel="stylesheet" href="{% static 'board.css' %}?v=16">
+  <script src="{% static 'htmx.min.js' %}" defer></script>
+
+  {# Installable web app (PWA) #}
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <link rel="icon" href="{% static 'icon.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'icon.svg' %}">
+  <meta name="theme-color" content="#12151a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="{{ app_name|default:'BedTracker' }}">
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("{% url 'service_worker' %}").catch(function () {});
+      });
+    }
+  </script>
+</head>
+{# hx-headers sends the CSRF token with every HTMX request so Django accepts POSTs #}
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+  {% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+    <li class="message {{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</body>
+</html>

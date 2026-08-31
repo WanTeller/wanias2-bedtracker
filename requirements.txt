@@ -1,0 +1,9 @@
+Django==5.1.4
+
+# Production (also fine to have installed locally):
+gunicorn==23.0.0            # WSGI server used by the host
+whitenoise==6.8.2           # serves static files from the app process
+dj-database-url==2.3.0      # reads the DATABASE_URL the host/Neon provides
+psycopg[binary]==3.2.3      # PostgreSQL driver
+
+# The local backup script (backup/) uses only the Python standard library.

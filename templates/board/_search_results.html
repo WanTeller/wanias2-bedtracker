@@ -1,0 +1,54 @@
+{% comment %}
+Search results. Context: search = {term, patients, tasks, notes, total}.
+Each result links to the relevant bed + tab.
+{% endcomment %}
+<div class="search-results">
+  <p class="search-summary">{{ search.total }} result{{ search.total|pluralize }}
+    for &ldquo;{{ search.term }}&rdquo;</p>
+
+  {% if search.patients %}
+  <h3>Patients</h3>
+  {% for p in search.patients %}
+  <a class="result-row" href="?bed={{ p.bed.id }}&tab=patient">
+    <span class="result-bed">{{ p.bed.number }}</span>
+    <span class="result-text">
+      {{ p.display_label }}
+      <span class="result-meta">{{ p.chief_complaint|default:"" }}</span>
+    </span>
+  </a>
+  {% endfor %}
+  {% endif %}
+
+  {% if search.tasks %}
+  <h3>Tasks</h3>
+  {% for t in search.tasks %}
+  <a class="result-row" href="?bed={{ t.patient.bed.id }}&tab=tasks">
+    <span class="result-bed">{{ t.patient.bed.number }}</span>
+    <span class="result-text">
+      {{ t.category.name }}: {{ t.name }}
+      <span class="result-meta">{{ t.patient.display_label }}
+        &middot; {{ t.get_status_display }}</span>
+    </span>
+  </a>
+  {% endfor %}
+  {% endif %}
+
+  {% if search.notes %}
+  <h3>Notes</h3>
+  {% for n in search.notes %}
+  <a class="result-row" href="?bed={{ n.patient.bed.id }}&tab=notes">
+    <span class="result-bed">{{ n.patient.bed.number }}</span>
+    <span class="result-text">
+      {{ n.body|truncatechars:90 }}
+      <span class="result-meta">{{ n.patient.display_label }}
+        &middot; {{ n.created_at|date:"j M H:i" }}</span>
+    </span>
+  </a>
+  {% endfor %}
+  {% endif %}
+
+  {% if not search.total %}
+  <p class="hint">Nothing matched. Search looks at current patients, their
+    tasks and their notes.</p>
+  {% endif %}
+</div>

@@ -1,0 +1,26 @@
+{% comment %}
+One row in the bed list. 'bed' is the bed; colour comes from bed.attention:
+overdue = red, pending = amber, clear = plain, empty = faint.
+id lets a task action refresh just this card via hx-swap-oob.
+{% endcomment %}
+{% with patient=bed.current_patient %}
+<a class="bed-card attention-{{ bed.attention }} {% if selected_bed.id == bed.id %}selected{% endif %}"
+   id="bed-card-{{ bed.id }}"
+   {% if oob %}hx-swap-oob="true"{% endif %}
+   href="?bed={{ bed.id }}{% if active_filter and active_filter != 'all' %}&filter={{ active_filter }}{% endif %}">
+  <span class="bed-number">{{ bed.number }}</span>
+  <span class="bed-body">
+    {% if patient %}
+      <span class="bed-name">{{ patient.display_label }}</span>
+      <span class="bed-meta">
+        {% if patient.age %}{{ patient.age }}{{ patient.sex }} &middot; {% endif %}
+        {{ patient.chief_complaint|default:"" }}
+      </span>
+    {% else %}
+      <span class="bed-name muted">Empty</span>
+      <span class="bed-meta muted">Add patient</span>
+    {% endif %}
+  </span>
+  {% if bed.attention == 'overdue' %}<span class="action-flag">ACTION</span>{% endif %}
+</a>
+{% endwith %}

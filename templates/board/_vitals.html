@@ -1,0 +1,49 @@
+{% comment %}
+Vitals tab. Context: selected_bed, vitals_form, vitals_entries (newest first).
+Recording a set swaps this whole block back in via HTMX.
+{% endcomment %}
+
+<form class="vitals-add"
+      hx-post="{% url 'vitals_add' selected_bed.id %}"
+      hx-target="#vitals-panel" hx-swap="innerHTML" hx-disabled-elt="find button">
+  <div class="vitals-grid">
+    <label class="wide">Time {{ vitals_form.recorded_at }}</label>
+    <label>BP
+      <span class="bp-pair">{{ vitals_form.systolic }} / {{ vitals_form.diastolic }}</span>
+    </label>
+    <label>HR {{ vitals_form.pulse }}</label>
+    <label>Temp °C {{ vitals_form.temp_c }}</label>
+    <label>RR {{ vitals_form.resp_rate }}</label>
+    <label>SpO₂ % {{ vitals_form.spo2 }}</label>
+    <label>RBS {{ vitals_form.rbs }}</label>
+    <label class="wide">Note {{ vitals_form.note }}</label>
+  </div>
+  {% if vitals_form.errors %}
+  <div class="field-error">Check the values and try again.</div>
+  {% endif %}
+  <button type="submit" class="btn primary">Record vitals</button>
+</form>
+
+<div class="vitals-table-wrap">
+<table class="vitals-table">
+  <thead>
+    <tr><th>Time</th><th>BP</th><th>HR</th><th>Temp</th><th>RR</th><th>SpO₂</th><th>RBS</th></tr>
+  </thead>
+  <tbody>
+  {% for v in vitals_entries %}
+    <tr>
+      <td>{{ v.recorded_at|date:"j M H:i" }}</td>
+      <td>{{ v.bp|default:"–" }}</td>
+      <td>{{ v.pulse|default:"–" }}</td>
+      <td>{{ v.temp_c|default:"–" }}</td>
+      <td>{{ v.resp_rate|default:"–" }}</td>
+      <td>{{ v.spo2|default:"–" }}</td>
+      <td>{{ v.rbs|default:"–" }}</td>
+    </tr>
+    {% if v.note %}<tr class="vitals-note-row"><td colspan="7">{{ v.note }}</td></tr>{% endif %}
+  {% empty %}
+    <tr><td colspan="7" class="hint">No vitals recorded yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>

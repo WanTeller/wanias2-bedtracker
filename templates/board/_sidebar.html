@@ -1,0 +1,94 @@
+{% comment %}
+The left-side Ward Activity sidebar. Needs: sidebar_tab, and depending on
+the tab: event_groups / discharged_patients / tomorrow_items.
+{% endcomment %}
+<div class="overlay">
+  <a class="overlay-backdrop" href="{% url 'board' %}" aria-label="Close"></a>
+
+  <aside class="panel panel-left">
+    <div class="panel-header">
+      <h2>Ward activity</h2>
+      <a class="panel-close" href="{% url 'board' %}" aria-label="Close">&times;</a>
+    </div>
+
+    <nav class="panel-tabs">
+      <a class="tab {% if sidebar_tab == 'activity' %}active{% endif %}"
+         href="{% url 'activity' %}?tab=activity">Activity</a>
+      <a class="tab {% if sidebar_tab == 'discharged' %}active{% endif %}"
+         href="{% url 'activity' %}?tab=discharged">Discharged</a>
+      <a class="tab {% if sidebar_tab == 'tomorrow' %}active{% endif %}"
+         href="{% url 'activity' %}?tab=tomorrow">Tomorrow
+        {% if tomorrow_items %}<span class="tab-count">{{ tomorrow_items|length }}</span>{% endif %}
+      </a>
+    </nav>
+
+    <div class="panel-body">
+      {% if sidebar_tab == 'discharged' %}
+        {% for p in discharged_patients %}
+        <div class="event-row">
+          <span class="event-dot kind-discharged"></span>
+          <span class="event-text">
+            {{ p.display_label }}
+            {% if p.bed %}<span class="muted">&middot; was bed {{ p.bed.number }}</span>{% endif %}
+            <span class="event-time">{{ p.discharged_at|date:"j M H:i" }}</span>
+          </span>
+        </div>
+        {% empty %}
+        <p class="hint">No discharged patients yet.</p>
+        {% endfor %}
+
+      {% elif sidebar_tab == 'tomorrow' %}
+        <div class="day-label">Due {{ tomorrow_date|date:"j M Y" }}</div>
+        {% for task in tomorrow_items %}
+        <a class="event-row" href="{% url 'board' %}?bed={{ task.patient.bed.id }}&tab=tasks">
+          <span class="event-count">{{ forloop.counter }}</span>
+          <span class="event-text">
+            {{ task.category.name }}: {{ task.name }}
+            <span class="event-time">Bed {{ task.patient.bed.number }} &middot;
+              {{ task.patient.display_label }} &middot;
+              {{ task.effective_due|time:"H:i" }}</span>
+          </span>
+        </a>
+        {% empty %}
+        <p class="hint">Nothing due tomorrow. Set a task's due time with the
+          pencil icon to schedule it here.</p>
+        {% endfor %}
+
+      {% else %}
+        {% for day, events in event_groups %}
+        <div class="day-group">
+          <div class="day-label">{{ day|date:"j M Y" }}</div>
+          {% for event in events %}
+          <div class="event-row">
+            <span class="event-dot kind-{{ event.kind }}"></span>
+            <span class="event-text">
+              {{ event.summary }}
+              <span class="event-time">{{ event.created_at|time:"H:i" }}
+                {% if event.bed %}&middot; bed {{ event.bed.number }}{% endif %}
+                {% if event.actor_name %}&middot; {{ event.actor_name }}{% endif %}</span>
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% empty %}
+        <p class="hint">No ward activity recorded yet.</p>
+        {% endfor %}
+      {% endif %}
+
+      {% if dev_clear_enabled %}
+      <details class="dev-tools">
+        <summary>&#9881; Developer</summary>
+        <p class="hint">Wipes every patient, task, note, vitals record and
+          activity entry. Beds and the task buttons stay. Cannot be undone.</p>
+        <form method="post" action="{% url 'dev_clear' %}"
+              onsubmit="return confirm('Delete ALL patient data? This cannot be undone.');">
+          {% csrf_token %}
+          <input type="password" name="password" placeholder="Developer password"
+                 autocomplete="off" required>
+          <button type="submit" class="btn danger">Clear all patient data</button>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+  </aside>
+</div>

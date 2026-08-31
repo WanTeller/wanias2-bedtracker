@@ -1,0 +1,36 @@
+{# One task line. Context: task, selected_bed, editing_task_id. #}
+{% if task.id == editing_task_id %}
+<form class="task-row editing"
+      hx-post="{% url 'task_edit' task.id %}"
+      hx-target="#tasks-panel" hx-swap="innerHTML">
+  <input type="text" name="name" value="{{ task.name }}" autocomplete="off">
+  <label class="due-label">due
+    <input type="datetime-local" name="due_at"
+           {% if task.effective_due %}value="{{ task.effective_due|date:'Y-m-d' }}T{{ task.effective_due|date:'H:i' }}"{% endif %}>
+  </label>
+  <button type="submit" class="btn small">Save</button>
+  <a class="btn small" href="?bed={{ selected_bed.id }}&tab=tasks">Cancel</a>
+</form>
+{% else %}
+<div class="task-row {% if task.status == 'done' %}done{% endif %} {% if task.is_overdue %}overdue{% endif %}">
+  {# Ticked=to do; untick=done. 'was' lets the server ignore a stale click. #}
+  <input type="checkbox" {% if task.status != 'done' %}checked{% endif %}
+         hx-post="{% url 'task_toggle' task.id %}"
+         hx-vals='{"was": "{{ task.status }}"}'
+         hx-target="#tasks-panel" hx-swap="innerHTML" hx-disabled-elt="this">
+  <span class="task-name">{{ task.name }}</span>
+  <span class="task-when">
+    {% if task.status == 'done' %}done {{ task.done_at|time:"H:i" }}
+    {% elif task.is_overdue %}overdue
+    {% elif task.effective_due %}due {{ task.effective_due|time:"H:i" }}{% endif %}
+  </span>
+  <span class="task-actions">
+    <button class="icon-btn" title="Edit / reschedule"
+            hx-get="{% url 'task_edit' task.id %}"
+            hx-target="#tasks-panel" hx-swap="innerHTML">&#9998;</button>
+    <button class="icon-btn" title="Cancel task"
+            hx-post="{% url 'task_cancel' task.id %}"
+            hx-target="#tasks-panel" hx-swap="innerHTML">&times;</button>
+  </span>
+</div>
+{% endif %}

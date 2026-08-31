@@ -1,0 +1,82 @@
+<!--
+  templates/index.html
+
+  This is the page the browser shows. It is mostly normal HTML, plus a few
+  Jinja tags that Flask fills in with Python data before sending the page:
+    double-brace VALUE    = print a value here
+    brace-percent FOR ... = loop / logic (does not print by itself)
+  You can see both kinds used further down.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BedTracker</title>
+  <style>
+    body   { font-family: system-ui, Arial, sans-serif; margin: 2rem; color: #1a1a1a; }
+    h1     { margin-bottom: 0.25rem; }
+    .sub   { color: #666; margin-top: 0; }
+    table  { border-collapse: collapse; width: 100%; max-width: 800px; margin-top: 1rem; }
+    th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid #ddd; }
+    th     { background: #f4f4f4; }
+
+    /* Colour-code the status cell so the board is readable at a glance. */
+    .status-Available { color: #0a7d28; font-weight: 600; }
+    .status-Occupied  { color: #b3261e; font-weight: 600; }
+    .status-Cleaning  { color: #9a6700; font-weight: 600; }
+
+    form   { display: flex; gap: 0.4rem; }
+    select, button { padding: 0.3rem 0.5rem; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+  <h1>BedTracker</h1>
+  <p class="sub">Simple bed status board &mdash; v1</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Ward</th>
+        <th>Room</th>
+        <th>Bed</th>
+        <th>Status</th>
+        <th>Change to</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Loop once per bed row that app.py handed us. -->
+      {% for bed in beds %}
+      <tr>
+        <td>{{ bed["ward"] }}</td>
+        <td>{{ bed["room"] }}</td>
+        <td>{{ bed["label"] }}</td>
+
+        <!-- The class becomes e.g. "status-Occupied", matching the CSS above. -->
+        <td class="status-{{ bed['status'] }}">{{ bed["status"] }}</td>
+
+        <td>
+          <!--
+            This little form posts to /update/<that bed's id>.
+            When submitted, app.py's update() function runs.
+          -->
+          <form method="post" action="{{ url_for('update', bed_id=bed['id']) }}">
+            <select name="status">
+              {% for s in statuses %}
+              <!-- Pre-select the bed's current status in the dropdown. -->
+              <option value="{{ s }}" {% if s == bed["status"] %}selected{% endif %}>
+                {{ s }}
+              </option>
+              {% endfor %}
+            </select>
+            <button type="submit">Save</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
+</html>

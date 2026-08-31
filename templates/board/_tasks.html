@@ -1,0 +1,25 @@
+{% comment %}
+Tasks tab body. Context: selected_bed, slot_rows, open_key, editing_task_id.
+Every action posts with HTMX and swaps this whole block back in.
+{% endcomment %}
+
+{# Top "+ Add Task" - free text, filed under Unassigned. #}
+<details class="add-task">
+  <summary>&#43; Add Task</summary>
+  <form class="add-task-bar"
+        hx-post="{% url 'task_add' selected_bed.id %}"
+        hx-target="#tasks-panel" hx-swap="innerHTML" hx-disabled-elt="find button">
+    <input type="hidden" name="category_key" value="unassigned">
+    <input type="text" name="custom_name" autocomplete="off"
+           placeholder="Describe the task">
+    <button type="submit" class="btn small">Add</button>
+  </form>
+</details>
+
+{% for row in slot_rows %}
+<div class="slot-row {% if row.paired %}paired{% endif %}">
+  {% for slot in row.slots %}
+    {% include "board/_slot.html" %}
+  {% endfor %}
+</div>
+{% endfor %}

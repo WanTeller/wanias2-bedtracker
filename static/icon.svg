@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#12151a"/>
+  <g fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M96 300h250a48 48 0 0 1 48 48v64"/>
+    <path d="M96 220v192"/>
+    <path d="M96 348h298"/>
+    <circle cx="168" cy="264" r="30" fill="#ffffff" stroke="none"/>
+  </g>
+  <text x="256" y="150" font-family="system-ui, Arial, sans-serif" font-size="120"
+        font-weight="700" fill="#ffffff" text-anchor="middle">W2</text>
+</svg>

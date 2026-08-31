@@ -1,0 +1,15 @@
+{# The three summary cards. id="summary" so task actions can refresh it. #}
+<section class="summary" id="summary" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <div class="summary-card">
+    <div class="summary-value">{{ ward.occupied_count }}/{{ ward.bed_count }}</div>
+    <div class="summary-label">Beds</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-value {% if not pending_count %}muted{% endif %}">{{ pending_count }}</div>
+    <div class="summary-label">Pending</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-value {% if overdue_count %}danger{% else %}muted{% endif %}">{{ overdue_count }}</div>
+    <div class="summary-label">Overdue</div>
+  </div>
+</section>

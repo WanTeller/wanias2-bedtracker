@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="auth-page">
+  <div class="auth-card">
+    <h1>{{ app_name }}</h1>
+    <p class="auth-subtitle">{{ app_subtitle }}</p>
+    <h2>{% block heading %}{% endblock %}</h2>
+
+    {% block body %}{% endblock %}
+  </div>
+</main>
+{% endblock %}

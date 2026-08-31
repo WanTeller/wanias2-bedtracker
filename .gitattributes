@@ -1,0 +1,5 @@
+# Store everything with LF so scripts run on the Linux host.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary

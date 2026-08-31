@@ -1,0 +1,22 @@
+{% comment %}
+Notes tab. Context: selected_bed, notes (newest first).
+Adding a note swaps this whole block back in via HTMX.
+{% endcomment %}
+
+<form class="note-add"
+      hx-post="{% url 'note_add' selected_bed.id %}"
+      hx-target="#notes-panel" hx-swap="innerHTML"
+      hx-disabled-elt="find button"
+      hx-on::after-request="this.reset()">
+  <textarea name="body" rows="3" placeholder="Add a note…" autocomplete="off"></textarea>
+  <button type="submit" class="btn primary">Add note</button>
+</form>
+
+{% for note in notes %}
+<div class="note">
+  <div class="note-time">{{ note.created_at|date:"j M Y, H:i" }}</div>
+  <div class="note-body">{{ note.body|linebreaksbr }}</div>
+</div>
+{% empty %}
+<p class="hint">No notes yet.</p>
+{% endfor %}

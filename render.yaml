@@ -1,0 +1,28 @@
+# Render Blueprint. In the Render dashboard: New + -> Blueprint -> pick this repo.
+# Everything except the two "sync: false" secrets is created automatically.
+services:
+  - type: web
+    name: wanias2-bedtracker
+    runtime: python
+    plan: free
+    region: singapore            # closest free region to Pakistan
+    branch: main
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    healthCheckPath: /healthz/
+    autoDeploy: true             # redeploys on every git push to main
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.1"
+      - key: BEDTRACKER_DEBUG
+        value: "false"
+      - key: BEDTRACKER_SECRET_KEY
+        generateValue: true      # Render generates and stores a strong key
+      - key: BEDTRACKER_ALLOWED_HOSTS
+        sync: false              # set to your Render URL host after first deploy
+      - key: BEDTRACKER_CSRF_TRUSTED_ORIGINS
+        sync: false              # set to https://<your-render-url>
+      - key: DATABASE_URL
+        sync: false              # paste the Neon connection string (pooled)
+      - key: WEB_CONCURRENCY
+        value: "2"               # gunicorn workers (fits the 512 MB free instance)

@@ -1,0 +1,13 @@
+{% comment %}
+Horizontally-scrolling filter chips. Clicking one reloads the board with
+?filter=<key>. id="chips" so task actions can refresh the counts.
+{% endcomment %}
+<nav class="chips" id="chips" {% if oob %}hx-swap-oob="true"{% endif %}>
+  {% for chip in chips %}
+  <a class="chip {% if chip.active %}active{% endif %}"
+     href="?filter={{ chip.key }}{% if selected_bed %}&bed={{ selected_bed.id }}&tab={{ panel_tab }}{% endif %}">
+    {{ chip.label }}
+    {% if chip.count is not None %}<span class="chip-count">{{ chip.count }}</span>{% endif %}
+  </a>
+  {% endfor %}
+</nav>

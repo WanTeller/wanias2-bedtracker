@@ -1,0 +1,131 @@
+{% comment %}
+The right-side bed panel. Context: selected_bed, patient_form, panel_tab,
+plus (History) event_groups, (Tasks) slot_rows / open_key / editing_task_id.
+{% endcomment %}
+{% with patient=selected_bed.current_patient %}
+<div class="overlay">
+  <a class="overlay-backdrop" href="{% url 'board' %}" aria-label="Close panel"></a>
+
+  <aside class="panel panel-right">
+    <div class="panel-header">
+      <div>
+        <h2>
+          Bed {{ selected_bed.number }}
+          {% if patient %} &middot; {{ patient.display_label }}{% endif %}
+        </h2>
+        {% if patient %}
+        <p class="subtitle">Adm {{ patient.admission_date|date:"Y-m-d" }}</p>
+        {% endif %}
+      </div>
+      <a class="panel-close" href="{% url 'board' %}" aria-label="Close">&times;</a>
+    </div>
+
+    <nav class="panel-tabs">
+      <a class="tab {% if panel_tab == 'patient' %}active{% endif %}"
+         href="?bed={{ selected_bed.id }}&tab=patient">Patient</a>
+      {% if patient %}
+      <a class="tab {% if panel_tab == 'tasks' %}active{% endif %}"
+         href="?bed={{ selected_bed.id }}&tab=tasks">Tasks</a>
+      {% else %}
+      <span class="tab disabled">Tasks</span>
+      {% endif %}
+      <span class="tab disabled">Orders</span>
+      {% if patient %}
+      <a class="tab {% if panel_tab == 'notes' %}active{% endif %}"
+         href="?bed={{ selected_bed.id }}&tab=notes">Notes</a>
+      <a class="tab {% if panel_tab == 'vitals' %}active{% endif %}"
+         href="?bed={{ selected_bed.id }}&tab=vitals">Vitals</a>
+      <a class="tab {% if panel_tab == 'history' %}active{% endif %}"
+         href="?bed={{ selected_bed.id }}&tab=history">History</a>
+      {% else %}
+      <span class="tab disabled">Notes</span>
+      <span class="tab disabled">Vitals</span>
+      <span class="tab disabled">History</span>
+      {% endif %}
+    </nav>
+
+    {% comment %}
+    hx-vals here is inherited by every HTMX request inside the panel, so the
+    server can check the bed's patient hasn't changed under the user.
+    {% endcomment %}
+    <div class="panel-body" hx-vals='{"patient_id": "{{ patient.id }}"}'>
+      {% if panel_tab == 'tasks' and patient %}
+        <div id="tasks-panel">{% include "board/_tasks.html" %}</div>
+
+      {% elif panel_tab == 'notes' and patient %}
+        <div id="notes-panel">{% include "board/_notes.html" %}</div>
+
+      {% elif panel_tab == 'vitals' and patient %}
+        <div id="vitals-panel">{% include "board/_vitals.html" %}</div>
+
+      {% elif panel_tab == 'history' %}
+        {% for day, events in event_groups %}
+        <div class="day-group">
+          <div class="day-label">{{ day|date:"j M Y" }}</div>
+          {% for event in events %}
+          <div class="event-row">
+            <span class="event-dot kind-{{ event.kind }}"></span>
+            <span class="event-text">
+              {{ event.summary }}
+              <span class="event-time">{{ event.get_kind_display }}
+                &middot; {{ event.created_at|time:"H:i" }}
+                {% if event.actor_name %}&middot; {{ event.actor_name }}{% endif %}</span>
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% empty %}
+        <p class="hint">No history for this patient yet.</p>
+        {% endfor %}
+
+      {% else %}
+        {% if not patient %}
+        <p class="hint">Enter at least a name, then Save, to occupy this bed.</p>
+        {% endif %}
+
+        <form method="post" action="{% url 'save_patient' selected_bed.id %}">
+          {% csrf_token %}
+          {% if patient %}
+          <input type="hidden" name="expected_updated_at"
+                 value="{{ patient.updated_at.isoformat }}">
+          {% endif %}
+          {% for field in patient_form %}
+          <div class="field">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
+            <div class="field-error">{{ field.errors|striptags }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <div class="panel-actions">
+            <button type="submit" class="btn primary">Save patient details</button>
+          </div>
+        </form>
+
+        {% if patient %}
+        <div class="discharge-form">
+          {% if confirm_discharge %}
+            <div class="confirm-box">
+              <p>Discharge <strong>{{ patient.name }}</strong> from bed
+                 {{ selected_bed.number }}? The bed will become empty; the
+                 patient stays in records and the Discharged list.</p>
+              <div class="panel-actions">
+                <form method="post" action="{% url 'discharge_patient' selected_bed.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn danger">Yes, discharge</button>
+                </form>
+                <a class="btn" href="?bed={{ selected_bed.id }}&tab=patient">Cancel</a>
+              </div>
+            </div>
+          {% else %}
+            <a class="btn danger"
+               href="?bed={{ selected_bed.id }}&tab=patient&confirm=discharge">Discharge patient</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endwith %}
