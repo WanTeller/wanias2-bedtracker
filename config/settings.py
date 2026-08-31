@@ -62,10 +62,12 @@ ALLOWED_HOSTS = [
 ]
 
 # Origins allowed to POST (Django requires this once you're on a real domain).
-# Defaults to https:// for every non-local ALLOWED_HOST; add more with
+# Defaults to https:// for every specific non-local ALLOWED_HOST; add more with
 # BEDTRACKER_CSRF_TRUSTED_ORIGINS (comma-separated, scheme included).
 CSRF_TRUSTED_ORIGINS = [
-    f"https://{h}" for h in ALLOWED_HOSTS if h not in ("localhost", "127.0.0.1")
+    f"https://{h}"
+    for h in ALLOWED_HOSTS
+    if h not in ("localhost", "127.0.0.1", "*") and "*" not in h
 ] + [
     o.strip()
     for o in os.environ.get("BEDTRACKER_CSRF_TRUSTED_ORIGINS", "").split(",")
@@ -191,12 +193,21 @@ else:
         }
     }
 
-if not DEBUG and not RUNNING_TESTS and "sqlite" in DATABASES["default"]["ENGINE"]:
+# Managed hosts must use PostgreSQL (their disk is wiped on redeploy). When you
+# self-host on your own always-on PC, SQLite is fine - opt in explicitly.
+if (
+    not DEBUG
+    and not RUNNING_TESTS
+    and "sqlite" in DATABASES["default"]["ENGINE"]
+    and not _env_bool("BEDTRACKER_ALLOW_SQLITE", False)
+):
     from django.core.exceptions import ImproperlyConfigured
 
     raise ImproperlyConfigured(
-        "Production (BEDTRACKER_DEBUG=false) needs PostgreSQL. Set DATABASE_URL "
-        "(or BEDTRACKER_DB=postgres + BEDTRACKER_DB_*)."
+        "Production (BEDTRACKER_DEBUG=false) defaults to PostgreSQL - set "
+        "DATABASE_URL (or BEDTRACKER_DB=postgres + BEDTRACKER_DB_*). If you are "
+        "self-hosting on your own machine and want to keep SQLite, set "
+        "BEDTRACKER_ALLOW_SQLITE=true."
     )
 
 

@@ -303,10 +303,22 @@ scripts is git-ignored.
 - Config in `backup/backup.env` (copy from `.example`); never contains a
   password (PostgreSQL uses `PGPASSWORD` / `pgpass.conf`).
 
-## Deployment (Render + Neon, free)
+## Deployment - three $0 options (`DEPLOY.md`)
 
-Full beginner walkthrough: **`DEPLOY.md`**. Host = Render free web service,
-DB = Neon free serverless Postgres (never expires). Cost $0, no card.
+Render now requires a card **on file** (not charged for free use), so there are
+three paths:
+- **A. Render + Neon** - proper cloud hosting; needs a card on file.
+- **B. Self-host on the Windows PC + Tailscale Funnel** - free, **no card**,
+  public HTTPS URL, works off-site while the PC is on. `waitress` serves it,
+  SQLite stays, `BEDTRACKER_ALLOW_SQLITE=true`.
+- **C. Self-host on the hospital LAN** - `waitress-serve --host=0.0.0.0`,
+  `BEDTRACKER_ALLOWED_HOSTS=*`, HTTP only, on-site only.
+
+`requirements.txt` has both `gunicorn` (Linux/Render) and `waitress`
+(Windows self-host). The `not DEBUG` + SQLite guard has a
+`BEDTRACKER_ALLOW_SQLITE=true` escape hatch for self-hosting.
+`CSRF_TRUSTED_ORIGINS` skips `*` wildcards. Verified: `check --deploy` clean and
+CSRF-protected login POST works over plain HTTP for options B/C.
 
 Deployment files (all committed): `render.yaml` (Blueprint), `build.sh`
 (`pip install` + `collectstatic` + `migrate`), `Procfile`, `runtime.txt`
