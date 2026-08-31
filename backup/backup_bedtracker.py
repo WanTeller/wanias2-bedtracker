@@ -68,6 +68,7 @@ def load_config() -> dict:
         "PG_PORT": g("PG_PORT", "5432"),
         "PG_DB": g("PG_DB", "bedtracker"),
         "PG_USER": g("PG_USER", "bedtracker"),
+        "PG_SSLMODE": g("PG_SSLMODE", "prefer"),
         "PG_DUMP": g("PG_DUMP", "pg_dump"),
         "PG_RESTORE": g("PG_RESTORE", "pg_restore"),
         "BACKUP_DIR": g("BACKUP_DIR", HERE),
@@ -142,13 +143,19 @@ def dump_sqlite(cfg, dest_uncompressed: str) -> None:
         source.backup(dst)
 
 
+def _pg_env(cfg):
+    env = os.environ.copy()
+    env.setdefault("PGSSLMODE", cfg["PG_SSLMODE"])   # Neon/managed PG need SSL
+    return env
+
+
 def dump_postgres(cfg, dest: str) -> None:
     cmd = [
         cfg["PG_DUMP"], "-Fc", "--no-owner", "--no-privileges",
         "-h", cfg["PG_HOST"], "-p", cfg["PG_PORT"],
         "-U", cfg["PG_USER"], "-d", cfg["PG_DB"], "-f", dest,
     ]
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True, env=_pg_env(cfg))
 
 
 def make_backup(cfg, force: bool = False) -> int:
@@ -338,7 +345,7 @@ def restore(cfg, source_file: str, target: str) -> int:
         cmd = [cfg["PG_RESTORE"], "--clean", "--if-exists", "--no-owner",
                "-h", cfg["PG_HOST"], "-p", cfg["PG_PORT"], "-U", cfg["PG_USER"],
                "-d", target, src]
-        rc = subprocess.run(cmd).returncode
+        rc = subprocess.run(cmd, env=_pg_env(cfg)).returncode
         log(cfg, f"pg_restore -> database '{target}' exit {rc}")
         return rc
 

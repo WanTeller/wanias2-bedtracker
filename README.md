@@ -4,8 +4,10 @@ A hospital ward task board, rebuilt in Python from a Base44 prototype.
 Stack: **Django + SQLite (PostgreSQL-ready) + Django templates + HTMX + CSS**.
 
 See [CLAUDE.md](CLAUDE.md) for the full project context and feature plan.
-**New to this / just running the testing phase?** Follow
-[HOW-TO-RUN.md](HOW-TO-RUN.md) instead — it assumes no programming experience.
+
+- **Just running it locally for testing?** → [HOW-TO-RUN.md](HOW-TO-RUN.md)
+- **Deploying it online (free)?** → [DEPLOY.md](DEPLOY.md)
+- **Local database backups?** → [backup/README.md](backup/README.md)
 
 ## Project layout
 

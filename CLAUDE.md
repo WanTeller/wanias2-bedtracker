@@ -303,17 +303,52 @@ scripts is git-ignored.
 - Config in `backup/backup.env` (copy from `.example`); never contains a
   password (PostgreSQL uses `PGPASSWORD` / `pgpass.conf`).
 
-## Before hosting (the remaining work)
+## Deployment (Render + Neon, free)
 
-- Set `BEDTRACKER_SECRET_KEY`, `BEDTRACKER_DEBUG=false`,
-  `BEDTRACKER_ALLOWED_HOSTS`, and `BEDTRACKER_DB=postgres` + `BEDTRACKER_DB_*`
-  in the host's environment. `pip install "psycopg[binary]"`.
-- `python manage.py migrate` + `collectstatic` (whitenoise or the platform's
-  static serving) on the host.
-- Point `backup/backup.env` at the hosted PostgreSQL (`DB_KIND=postgres`); the
-  local Windows backup task keeps running unchanged.
-- Free-tier target still open (e.g. Fly.io / Railway / Render + their free
-  Postgres, or PythonAnywhere). `config/settings.py` already turns on secure
-  cookies + SSL redirect when `DEBUG=false`.
-- Not built: Orders tab (deferred), multi-bed grouping in the activity feed,
-  hospital-system lab integration.
+Full beginner walkthrough: **`DEPLOY.md`**. Host = Render free web service,
+DB = Neon free serverless Postgres (never expires). Cost $0, no card.
+
+Deployment files (all committed): `render.yaml` (Blueprint), `build.sh`
+(`pip install` + `collectstatic` + `migrate`), `Procfile`, `runtime.txt`
+(python-3.13.1), `.gitattributes` (LF endings so `build.sh` runs on Linux).
+
+Production settings (`config/settings.py`, active when `BEDTRACKER_DEBUG=false`):
+- DB resolved as: `DATABASE_URL` (dj-database-url, `ssl_require=True`) →
+  `BEDTRACKER_DB=postgres` + `BEDTRACKER_DB_*` → SQLite. **Hard guard**: raises
+  `ImproperlyConfigured` if production falls through to SQLite.
+- WhiteNoise middleware + `CompressedManifestStaticFilesStorage` serve static
+  files from the app process (`STORAGES`; plain storage under tests).
+- `SECURE_PROXY_SSL_HEADER`, `SECURE_SSL_REDIRECT`, HSTS (1yr), secure cookies,
+  nosniff. `CSRF_TRUSTED_ORIGINS` from `ALLOWED_HOSTS` +
+  `BEDTRACKER_CSRF_TRUSTED_ORIGINS`.
+- `LOGGING` → stderr (host captures it). `django.request` errors at ERROR.
+- `python manage.py check --deploy` passes clean with a real secret key.
+- `gunicorn config.wsgi:application` is the start command.
+- `/healthz/` (`board.views.healthz`, `@login_not_required`) = health check,
+  also pings the DB.
+
+Custom domain later: add it in Render, add it to `BEDTRACKER_ALLOWED_HOSTS` +
+`BEDTRACKER_CSRF_TRUSTED_ORIGINS`. No code change.
+
+## PWA (installable web app)
+
+- `templates/manifest.webmanifest` and `templates/sw.js` served from the site
+  root (`config/urls.py`, `TemplateView` + `login_not_required`) so the service
+  worker scope is `/`. `static/icon.svg` is the app icon.
+- `base.html` links the manifest, theme-color, apple-touch meta, and registers
+  the SW. The SW is cache-first for `/static/`, **network-first for everything
+  else** (clinical pages never served stale). Bump `CACHE` in `sw.js` + the
+  `?v=N` on `board.css` together when assets change.
+
+## Mobile / responsive
+
+Desktop layout unchanged. `static/board.css` has a `@media (max-width: 600px)`
+block: tighter topbar/summary, **bed & activity panels become full-screen
+sheets** (`.panel width:100%`, no border/backdrop), Order/Chase Labs stack
+instead of side-by-side, larger tap targets, all inputs 16px (no iOS zoom).
+`viewport-fit=cover` in the meta tag.
+
+## Still not built (by prior agreement)
+
+Orders tab, multi-bed grouping in the activity feed, hospital-system lab
+integration.
