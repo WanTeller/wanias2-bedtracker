@@ -7,7 +7,7 @@ services:
     plan: free
     region: singapore            # closest free region to Pakistan
     branch: main
-    buildCommand: "./build.sh"
+    buildCommand: "bash build.sh"
     startCommand: "gunicorn config.wsgi:application"
     healthCheckPath: /healthz/
     autoDeploy: true             # redeploys on every git push to main
