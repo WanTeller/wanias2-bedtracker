@@ -61,8 +61,17 @@ ALLOWED_HOSTS = [
     if h.strip()
 ]
 
+# Hosts that Railway / Render inject automatically - so you don't have to set
+# BEDTRACKER_ALLOWED_HOSTS by hand on those platforms.
+for _auto in (
+    os.environ.get("RAILWAY_PUBLIC_DOMAIN", ""),
+    os.environ.get("RENDER_EXTERNAL_HOSTNAME", ""),
+):
+    if _auto and _auto not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_auto)
+
 # Origins allowed to POST (Django requires this once you're on a real domain).
-# Defaults to https:// for every specific non-local ALLOWED_HOST; add more with
+# https:// for every specific non-local ALLOWED_HOST, plus anything in
 # BEDTRACKER_CSRF_TRUSTED_ORIGINS (comma-separated, scheme included).
 CSRF_TRUSTED_ORIGINS = [
     f"https://{h}"

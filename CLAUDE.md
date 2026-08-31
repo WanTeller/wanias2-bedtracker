@@ -303,22 +303,22 @@ scripts is git-ignored.
 - Config in `backup/backup.env` (copy from `.example`); never contains a
   password (PostgreSQL uses `PGPASSWORD` / `pgpass.conf`).
 
-## Deployment - three $0 options (`DEPLOY.md`)
+## Deployment - $0 options (`DEPLOY.md`)
 
-Render now requires a card **on file** (not charged for free use), so there are
-three paths:
-- **A. Render + Neon** - proper cloud hosting; needs a card on file.
-- **B. Self-host on the Windows PC + Tailscale Funnel** - free, **no card**,
-  public HTTPS URL, works off-site while the PC is on. `waitress` serves it,
-  SQLite stays, `BEDTRACKER_ALLOW_SQLITE=true`.
-- **C. Self-host on the hospital LAN** - `waitress-serve --host=0.0.0.0`,
-  `BEDTRACKER_ALLOWED_HOSTS=*`, HTTP only, on-site only.
+Render/Railway/Fly all now want a card; Railway's **trial** is the exception.
+- **A. Railway + Neon** - card-free **trial** (30 days full, then ~$1/mo credit
+  ≈ a few days/mo). Good for a pilot. `railway.json` + `build.sh` + `/healthz/`.
+- **B. Self-host Windows PC + Tailscale Funnel** - **permanent $0, no card**,
+  public HTTPS URL. `waitress-serve`, SQLite kept (`BEDTRACKER_ALLOW_SQLITE=true`).
+- **C. Hospital LAN** - `waitress-serve --host=0.0.0.0`, `ALLOWED_HOSTS=*`, HTTP.
+- **D. Render + Neon** - `render.yaml` still in repo; needs a card on file.
 
-`requirements.txt` has both `gunicorn` (Linux/Render) and `waitress`
-(Windows self-host). The `not DEBUG` + SQLite guard has a
-`BEDTRACKER_ALLOW_SQLITE=true` escape hatch for self-hosting.
-`CSRF_TRUSTED_ORIGINS` skips `*` wildcards. Verified: `check --deploy` clean and
-CSRF-protected login POST works over plain HTTP for options B/C.
+`requirements.txt`: `gunicorn` (Linux hosts) + `waitress` (Windows self-host).
+Settings auto-add `RAILWAY_PUBLIC_DOMAIN` / `RENDER_EXTERNAL_HOSTNAME` to
+ALLOWED_HOSTS + CSRF_TRUSTED_ORIGINS. `not DEBUG` + SQLite guard has a
+`BEDTRACKER_ALLOW_SQLITE=true` escape hatch. `CSRF_TRUSTED_ORIGINS` skips `*`.
+Verified: `check --deploy` clean (Railway & Render configs), CSRF login POST
+works over plain HTTP (B/C), `waitress` serves on Windows.
 
 Deployment files (all committed): `render.yaml` (Blueprint), `build.sh`
 (`pip install` + `collectstatic` + `migrate`), `Procfile`, `runtime.txt`
