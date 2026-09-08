@@ -4,7 +4,7 @@ plus (History) event_groups, (Tasks) slot_rows / open_key / editing_task_id.
 {% endcomment %}
 {% with patient=selected_bed.current_patient %}
 <div class="overlay">
-  <a class="overlay-backdrop" href="{% url 'board' %}" aria-label="Close panel"></a>
+  <a class="overlay-backdrop" href="{% url 'board' ward.slug %}" aria-label="Close panel"></a>
 
   <aside class="panel panel-right">
     <div class="panel-header">
@@ -17,7 +17,7 @@ plus (History) event_groups, (Tasks) slot_rows / open_key / editing_task_id.
         <p class="subtitle">Adm {{ patient.admission_date|date:"Y-m-d" }}</p>
         {% endif %}
       </div>
-      <a class="panel-close" href="{% url 'board' %}" aria-label="Close">&times;</a>
+      <a class="panel-close" href="{% url 'board' ward.slug %}" aria-label="Close">&times;</a>
     </div>
 
     <nav class="panel-tabs">
@@ -83,7 +83,7 @@ plus (History) event_groups, (Tasks) slot_rows / open_key / editing_task_id.
         <p class="hint">Enter at least a name, then Save, to occupy this bed.</p>
         {% endif %}
 
-        <form method="post" action="{% url 'save_patient' selected_bed.id %}">
+        <form method="post" action="{% url 'save_patient' ward.slug selected_bed.id %}">
           {% csrf_token %}
           {% if patient %}
           <input type="hidden" name="expected_updated_at"
@@ -111,7 +111,7 @@ plus (History) event_groups, (Tasks) slot_rows / open_key / editing_task_id.
                  {{ selected_bed.number }}? The bed will become empty; the
                  patient stays in records and the Discharged list.</p>
               <div class="panel-actions">
-                <form method="post" action="{% url 'discharge_patient' selected_bed.id %}">
+                <form method="post" action="{% url 'discharge_patient' ward.slug selected_bed.id %}">
                   {% csrf_token %}
                   <button type="submit" class="btn danger">Yes, discharge</button>
                 </form>

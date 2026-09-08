@@ -26,9 +26,15 @@ def actor_name(actor):
     return (actor.get_full_name() or actor.first_name or actor.email or "")[:80]
 
 
-def _event(*, patient, bed, kind, summary, actor=None):
+def _event(*, patient, bed, kind, summary, actor=None, ward=None):
+    # Work out which board this belongs to (usually from the bed / patient).
+    if ward is None:
+        if bed is not None:
+            ward = bed.ward
+        elif patient is not None and patient.bed_id:
+            ward = patient.bed.ward
     ActivityEvent.objects.create(
-        patient=patient, bed=bed, kind=kind, summary=summary,
+        ward=ward, patient=patient, bed=bed, kind=kind, summary=summary,
         actor=actor if getattr(actor, "is_authenticated", False) else None,
         actor_name=actor_name(actor),
     )
@@ -164,15 +170,19 @@ def toggle_slot(patient, category, actor=None):
 # custom preset buttons
 # --------------------------------------------------------------------------- #
 
-def add_custom_option(category, label):
+def add_custom_option(category, label, ward):
+    """Register a reusable preset button for one board."""
     from .models import TaskOption
 
     label = label.strip()
     if not label:
         return None
     option, _ = TaskOption.objects.get_or_create(
-        category=category, label=label,
-        defaults={"is_custom": True, "sort_order": category.options.count()},
+        category=category, label=label, ward=ward,
+        defaults={
+            "is_custom": True,
+            "sort_order": category.options.filter(ward=ward).count(),
+        },
     )
     return option
 
@@ -210,15 +220,19 @@ def add_vitals(patient, actor=None, **fields):
 # developer reset
 # --------------------------------------------------------------------------- #
 
-def clear_all_patient_data(actor=None):
-    """Wipe every patient and everything attached to them. Beds and the task
-    catalogue are kept. One final activity event records who did it."""
+def clear_ward_patient_data(ward, actor=None):
+    """Wipe every patient (and their tasks / notes / vitals / history) on ONE
+    board. Beds and the task buttons are kept. A final activity event records
+    who did it."""
     with transaction.atomic():
-        Note.objects.all().delete()
-        VitalsEntry.objects.all().delete()
-        Task.objects.all().delete()
-        ActivityEvent.objects.all().delete()
         from .models import Patient
-        Patient.objects.all().delete()
-        _event(patient=None, bed=None, kind=ActivityEvent.Kind.DATA_CLEARED,
+
+        patients = Patient.objects.filter(bed__ward=ward)
+        Note.objects.filter(patient__in=patients).delete()
+        VitalsEntry.objects.filter(patient__in=patients).delete()
+        Task.objects.filter(patient__in=patients).delete()
+        ActivityEvent.objects.filter(ward=ward).delete()
+        patients.delete()
+        _event(patient=None, bed=None, ward=ward,
+               kind=ActivityEvent.Kind.DATA_CLEARED,
                summary="All patient data cleared", actor=actor)

@@ -4,10 +4,11 @@
 
 <header class="topbar">
   <div class="topbar-left">
-    <a class="hamburger" href="{% url 'activity' %}" aria-label="Ward activity">&#9776;</a>
+    <a class="hamburger" href="{% url 'activity' ward.slug %}" aria-label="Ward activity">&#9776;</a>
     <div>
       <h1>{{ app_name }}</h1>
-      <p class="subtitle">{{ app_subtitle }} &middot; {{ ward.bed_count }} beds</p>
+      <p class="subtitle">{{ ward.name }} &middot; {{ ward.bed_count }} beds
+        &middot; <a class="switch-board" href="{% url 'home' %}">Switch board</a></p>
     </div>
   </div>
   <div class="topbar-user">
@@ -24,10 +25,10 @@
 
 {% include "board/_summary.html" %}
 
-<form class="search" method="get" action="{% url 'board' %}">
+<form class="search" method="get" action="{% url 'board' ward.slug %}">
   <input type="search" name="q" value="{{ query }}"
          placeholder="Search patients, tasks, notes…" autocomplete="off">
-  {% if query %}<a class="search-clear" href="{% url 'board' %}">Clear</a>{% endif %}
+  {% if query %}<a class="search-clear" href="{% url 'board' ward.slug %}">Clear</a>{% endif %}
 </form>
 
 {% if search %}

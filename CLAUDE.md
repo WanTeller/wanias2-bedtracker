@@ -99,7 +99,27 @@ part of the first working version.
 ## Current implementation status
 
 **Phases 1–5 + auth/concurrency/backups complete (2026-08-31).** The prototype
-rebuild is done. Remaining work is hosting (see the end of this file).
+rebuild is done.
+
+**Multi-board conversion in progress (from 2026-09-09).** Going from one shared
+ward to many independent "boards", each with its own group of people and its
+own share link (like a Google Sheet). Staged:
+- **Stage 1 done** – storage groundwork: `Ward` gains `slug` / `invite_token` /
+  `created_by` / `created_at`; new `WardMembership` (who's on which board);
+  `TaskOption.ward` (custom buttons scoped to one board; the 13 defaults stay
+  shared with `ward=NULL`); `ActivityEvent.ward`. Data migration `0007` folds
+  the one existing board in and makes every current account a member.
+- **Stage 2 done** – board moved to `/w/<slug>/`; `@ward_view` decorator
+  resolves the board from the slug and checks membership (non-member → 403
+  `board/not_a_member.html`); `/` → `views.home` (redirects to your board;
+  **transitional**: auto-joins the sole board during the pilot). All board
+  `{% url %}` calls carry `ward.slug`. `services.clear_ward_patient_data(ward)`
+  replaces the global wipe.
+- Stage 3 (next): real "your boards" dashboard at `/`, create-a-board form,
+  join-by-link view. Stage 4: per-board buttons finish + owner-gated dev clear.
+  Stage 5: switch-board UI, mobile, PWA, docs.
+
+Remaining after that: hosting (see the end of this file).
 
 Structure:
 - Django project `config/`, apps `board/` (the ward board) and `accounts/`
@@ -114,12 +134,15 @@ Structure:
   `BEDTRACKER_DB_*`, `BEDTRACKER_EMAIL_*`, `BEDTRACKER_DEV_CLEAR_PASSWORD`,
   `BEDTRACKER_SQLITE_PATH` (for test-restores).
 - **Login required for everything** via Django 5.1's `LoginRequiredMiddleware`.
-  Only `accounts.views.signup` is `@login_not_required` (Django exempts its own
-  auth views + admin login automatically).
-- `python manage.py seed_demo [--reset]` - ward, 44 beds, sample patients/tasks,
-  and a demo login `demo@ward.local` / `demo-pass-1234`.
-- `python manage.py seed_categories` - 13 categories + preset buttons.
-- `python manage.py test` - 42 tests.
+  Only `accounts.views.signup` + `board.views.healthz` are `@login_not_required`
+  (Django exempts its own auth views + admin login automatically). On top of
+  login, every board view is wrapped by `@ward_view` (in `board/views.py`),
+  which requires a `WardMembership` for the board named in the URL.
+- `python manage.py seed_demo [--reset]` - board "Surgical Unit 2", 44 beds,
+  sample patients/tasks, a demo login `demo@ward.local` / `demo-pass-1234`, and
+  a `WardMembership` making the demo user the board's owner.
+- `python manage.py seed_categories` - 13 categories + shared preset buttons.
+- `python manage.py test` - 50 tests.
 - **Testing mode**: set `BEDTRACKER_SIMPLE_LOGIN=true` (env or `.env`) for
   name-only login. See the "Testing mode" section below. `.env.example` lists
   every `BEDTRACKER_*` var.
@@ -127,8 +150,12 @@ Structure:
   concurrent writers wait rather than erroring.
 
 Models (`board/models.py`):
-- `Ward`, `Bed`, `Patient`, `ActivityEvent`, `TaskCategory`, `TaskOption`,
-  `Task`, `Note`, `VitalsEntry`.
+- `Ward`, `WardMembership`, `Bed`, `Patient`, `ActivityEvent`, `TaskCategory`,
+  `TaskOption`, `Task`, `Note`, `VitalsEntry`.
+- `Ward.slug` auto-fills from the name on first `save()`; `Ward.invite_token`
+  is the secret in the share link (`Ward.rotate_invite_token()` to reset).
+- `WardMembership(ward, user, role owner|member, display_name)`, unique per
+  (ward, user). `membership.is_owner` gates board-admin actions.
 - Bed occupancy is derived: `Bed.current_patient` = the active patient on that
   bed. Discharge keeps `patient.bed` for history.
 - `Bed.attention` -> "overdue" / "pending" / "clear" / "empty" drives the bed
@@ -151,7 +178,8 @@ Models (`board/models.py`):
 - Data changes + event writing go through `board/services.py`
   (`add_task`, `complete_task`, `reopen_task`, `cancel_task`, `edit_task`,
   `toggle_slot`, `record_admission`, `record_discharge`, `add_note`,
-  `add_vitals`, `clear_all_patient_data`).
+  `add_vitals`, `clear_ward_patient_data(ward)`). `add_custom_option` takes a
+  `ward`. `_event()` auto-derives the board from the bed/patient.
 
 ### Concurrency safety (~15-20 simultaneous users)
 - `Patient` has a partial `UniqueConstraint` (`bed`, `status='active'`) - the DB
@@ -173,12 +201,14 @@ Models (`board/models.py`):
   `hx-disabled-elt`.
 - Every task-action view is `@require_POST`.
 
-Screens:
-- Board `/`: top bar (hamburger → activity sidebar), 3 summary cards
-  (Beds, Pending, Overdue - all live), a search box, filter chips, bed list.
-  `?filter=all|pending|overdue|cat:<key>` narrows the bed list; chip counts =
-  open task counts. Beds sorted occupied-first then empty, numeric.
-- Search `/?q=<term>` (`_search` in views, `_search_results.html`): matches
+Screens (all board URLs are prefixed `/w/<slug>/`; `/` is `views.home`):
+- Board `/w/<slug>/`: top bar (hamburger → activity sidebar, "Switch board" →
+  `/`), 3 summary cards (Beds, Pending, Overdue - all live), a search box,
+  filter chips, bed list. `?filter=all|pending|overdue|cat:<key>` narrows the
+  bed list; chip counts = open task counts. Beds sorted occupied-first then
+  empty, numeric. `?bed=<id>` opens the panel (relative `?bed=` links resolve
+  against `/w/<slug>/`, so only `{% url %}` calls needed the slug added).
+- Search `/w/<slug>/?q=<term>` (`_search` in views, `_search_results.html`): matches
   current patients (name/record/complaint/history/plan), their non-cancelled
   tasks, and their notes. While searching, the chips + bed list are replaced
   by grouped result rows that link to the right bed + tab.
@@ -212,14 +242,16 @@ Screens:
     (`_vitals.html`, `#vitals-panel`). Each set writes a `vitals` event.
   - History tab = that patient's events by day (now includes note/vitals).
   - Orders tab still disabled.
-- Activity sidebar `/activity/?tab=activity|discharged|tomorrow`:
+- Activity sidebar `/w/<slug>/activity/?tab=activity|discharged|tomorrow`
+  (all queries scoped to that board):
   - Tomorrow = open tasks whose `effective_due` date is tomorrow, numbered,
     grouped by bed, with a count badge on the tab. Each row links to that
     bed's Tasks. Set a due time via the task's pencil to schedule one here.
   - A `<details>` "⚙ Developer" section at the bottom (only when
     `settings.DEV_CLEAR_PASSWORD` is set) — password + "Clear all patient
-    data" → `dev_clear` view → `services.clear_all_patient_data()` wipes
-    patients/tasks/notes/vitals/events, keeps beds + task catalogue.
+    data" → `dev_clear` view → `services.clear_ward_patient_data(ward)` wipes
+    that board's patients/tasks/notes/vitals/events, keeps beds + task
+    catalogue. (Stage 4 will also gate this on `membership.is_owner`.)
 
 HTMX mechanics (Phase 3):
 - Every task action posts and swaps `#tasks-panel` with `_tasks.html`, and the

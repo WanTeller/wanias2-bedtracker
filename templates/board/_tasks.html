@@ -7,7 +7,7 @@ Every action posts with HTMX and swaps this whole block back in.
 <details class="add-task">
   <summary>&#43; Add Task</summary>
   <form class="add-task-bar"
-        hx-post="{% url 'task_add' selected_bed.id %}"
+        hx-post="{% url 'task_add' ward.slug selected_bed.id %}"
         hx-target="#tasks-panel" hx-swap="innerHTML" hx-disabled-elt="find button">
     <input type="hidden" name="category_key" value="unassigned">
     <input type="text" name="custom_name" autocomplete="off"

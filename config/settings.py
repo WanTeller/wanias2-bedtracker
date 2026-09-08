@@ -238,7 +238,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "board"
+LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
 
 # Password-reset emails: printed to the console in development. To turn on real

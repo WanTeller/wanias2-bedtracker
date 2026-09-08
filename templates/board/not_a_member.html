@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="empty-state">
+  <h1>You're not on this board</h1>
+  <p>&ldquo;{{ ward.name }}&rdquo; is private to the people who have its share
+    link. Ask whoever set it up to send you the link.</p>
+  <p><a class="btn" href="{% url 'home' %}">Back to your boards</a></p>
+</main>
+{% endblock %}

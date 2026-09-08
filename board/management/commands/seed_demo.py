@@ -15,7 +15,7 @@ from django.utils import timezone
 
 from board.models import (
     ActivityEvent, Ward, Bed, Patient, Task, TaskCategory,
-    Note, VitalsEntry,
+    Note, VitalsEntry, WardMembership,
 )
 from board import services
 
@@ -90,15 +90,25 @@ class Command(BaseCommand):
         # A ready-to-use demo login so you can sign in during development.
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        if not User.objects.filter(email="demo@ward.local").exists():
-            User.objects.create_user(
-                username="demo@ward.local", email="demo@ward.local",
-                first_name="Demo Intern", password="demo-pass-1234",
-            )
-            self.stdout.write("Demo login: demo@ward.local / demo-pass-1234")
+        demo_user, _ = User.objects.get_or_create(
+            username="demo@ward.local",
+            defaults={"email": "demo@ward.local", "first_name": "Demo Intern"},
+        )
+        if not demo_user.has_usable_password():
+            demo_user.set_password("demo-pass-1234")
+            demo_user.save(update_fields=["password"])
+        self.stdout.write("Demo login: demo@ward.local / demo-pass-1234")
 
         ward, created = Ward.objects.get_or_create(name=WARD_NAME)
-        self.stdout.write(f"{'Created' if created else 'Found'} ward: {ward.name}")
+        self.stdout.write(f"{'Created' if created else 'Found'} ward: "
+                          f"{ward.name}  (/w/{ward.slug}/)")
+
+        # The demo user owns the demo board.
+        WardMembership.objects.update_or_create(
+            ward=ward, user=demo_user,
+            defaults={"role": WardMembership.Role.OWNER,
+                      "display_name": demo_user.first_name},
+        )
 
         made = 0
         for n in range(1, TOTAL_BEDS + 1):

@@ -4,7 +4,7 @@ Adding a note swaps this whole block back in via HTMX.
 {% endcomment %}
 
 <form class="note-add"
-      hx-post="{% url 'note_add' selected_bed.id %}"
+      hx-post="{% url 'note_add' ward.slug selected_bed.id %}"
       hx-target="#notes-panel" hx-swap="innerHTML"
       hx-disabled-elt="find button"
       hx-on::after-request="this.reset()">

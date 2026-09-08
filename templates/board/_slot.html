@@ -12,7 +12,7 @@ One category "slot". Context: slot, selected_bed, open_key, editing_task_id.
   <div class="slot-head">
     <input type="checkbox" class="slot-tick" {% if slot.checked %}checked{% endif %}
            title="Ticked = to do. Untick when done."
-           hx-post="{% url 'slot_toggle' selected_bed.id cat.key %}"
+           hx-post="{% url 'slot_toggle' ward.slug selected_bed.id cat.key %}"
            hx-target="#tasks-panel" hx-swap="innerHTML">
     <span class="slot-name {% if slot.cleared %}ticked{% endif %}">{{ cat.name }}</span>
     {% if slot.open_count %}<span class="slot-counter">{{ slot.open_count }}</span>{% endif %}
@@ -27,7 +27,7 @@ One category "slot". Context: slot, selected_bed, open_key, editing_task_id.
     <input type="checkbox" class="slot-tick" {% if slot.checked %}checked{% endif %}
            title="Ticked = to do. Untick when done."
            onclick="event.stopPropagation()"
-           hx-post="{% url 'slot_toggle' selected_bed.id cat.key %}"
+           hx-post="{% url 'slot_toggle' ward.slug selected_bed.id cat.key %}"
            hx-target="#tasks-panel" hx-swap="innerHTML">
     <span class="slot-name {% if slot.cleared %}ticked{% endif %}">{{ cat.name }}</span>
     {% if slot.open_count %}
@@ -46,7 +46,7 @@ One category "slot". Context: slot, selected_bed, open_key, editing_task_id.
     <div class="option-chips">
       {% for opt in cat.options.all %}
       <span class="chip-wrap">
-        <form hx-post="{% url 'task_add' selected_bed.id %}"
+        <form hx-post="{% url 'task_add' ward.slug selected_bed.id %}"
               hx-target="#tasks-panel" hx-swap="innerHTML"
               hx-disabled-elt="find button">
           <input type="hidden" name="category_key" value="{{ cat.key }}">
@@ -54,7 +54,7 @@ One category "slot". Context: slot, selected_bed, open_key, editing_task_id.
           <button type="submit" class="chip-btn">{{ opt.label }}</button>
         </form>
         {% if opt.is_custom %}
-        <form hx-post="{% url 'option_delete' opt.id %}"
+        <form hx-post="{% url 'option_delete' ward.slug opt.id %}"
               hx-target="#tasks-panel" hx-swap="innerHTML">
           <input type="hidden" name="bed_id" value="{{ selected_bed.id }}">
           <button type="submit" class="chip-x" title="Remove this button">&times;</button>
@@ -67,7 +67,7 @@ One category "slot". Context: slot, selected_bed, open_key, editing_task_id.
 
     {% if cat.allow_custom %}
     <form class="custom-add"
-          hx-post="{% url 'option_add' cat.key %}"
+          hx-post="{% url 'option_add' ward.slug cat.key %}"
           hx-target="#tasks-panel" hx-swap="innerHTML" hx-disabled-elt="find button">
       <input type="hidden" name="bed_id" value="{{ selected_bed.id }}">
       <input type="text" name="label" autocomplete="off"

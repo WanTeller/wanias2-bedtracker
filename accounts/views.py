@@ -19,13 +19,13 @@ def signup(request):
     if settings.SIMPLE_LOGIN:
         return redirect("login")   # signup is not needed in testing mode
     if request.user.is_authenticated:
-        return redirect("board")
+        return redirect("home")
 
     form = SignupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.create_user()
         login(request, user, backend="accounts.auth_backends.EmailBackend")
-        return redirect("board")
+        return redirect("home")
 
     return render(request, "accounts/signup.html", {"form": form})
 
@@ -55,12 +55,12 @@ def simple_login(request):
     if not settings.SIMPLE_LOGIN:
         return redirect("login")
     if request.user.is_authenticated:
-        return redirect("board")
+        return redirect("home")
 
     form = SimpleLoginForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = get_or_create_testing_user(form.cleaned_data["name"])
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-        return redirect("board")
+        return redirect("home")
 
     return render(request, "accounts/simple_login.html", {"form": form})

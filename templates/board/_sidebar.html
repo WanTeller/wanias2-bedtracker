@@ -3,21 +3,21 @@ The left-side Ward Activity sidebar. Needs: sidebar_tab, and depending on
 the tab: event_groups / discharged_patients / tomorrow_items.
 {% endcomment %}
 <div class="overlay">
-  <a class="overlay-backdrop" href="{% url 'board' %}" aria-label="Close"></a>
+  <a class="overlay-backdrop" href="{% url 'board' ward.slug %}" aria-label="Close"></a>
 
   <aside class="panel panel-left">
     <div class="panel-header">
       <h2>Ward activity</h2>
-      <a class="panel-close" href="{% url 'board' %}" aria-label="Close">&times;</a>
+      <a class="panel-close" href="{% url 'board' ward.slug %}" aria-label="Close">&times;</a>
     </div>
 
     <nav class="panel-tabs">
       <a class="tab {% if sidebar_tab == 'activity' %}active{% endif %}"
-         href="{% url 'activity' %}?tab=activity">Activity</a>
+         href="{% url 'activity' ward.slug %}?tab=activity">Activity</a>
       <a class="tab {% if sidebar_tab == 'discharged' %}active{% endif %}"
-         href="{% url 'activity' %}?tab=discharged">Discharged</a>
+         href="{% url 'activity' ward.slug %}?tab=discharged">Discharged</a>
       <a class="tab {% if sidebar_tab == 'tomorrow' %}active{% endif %}"
-         href="{% url 'activity' %}?tab=tomorrow">Tomorrow
+         href="{% url 'activity' ward.slug %}?tab=tomorrow">Tomorrow
         {% if tomorrow_items %}<span class="tab-count">{{ tomorrow_items|length }}</span>{% endif %}
       </a>
     </nav>
@@ -40,7 +40,7 @@ the tab: event_groups / discharged_patients / tomorrow_items.
       {% elif sidebar_tab == 'tomorrow' %}
         <div class="day-label">Due {{ tomorrow_date|date:"j M Y" }}</div>
         {% for task in tomorrow_items %}
-        <a class="event-row" href="{% url 'board' %}?bed={{ task.patient.bed.id }}&tab=tasks">
+        <a class="event-row" href="{% url 'board' ward.slug %}?bed={{ task.patient.bed.id }}&tab=tasks">
           <span class="event-count">{{ forloop.counter }}</span>
           <span class="event-text">
             {{ task.category.name }}: {{ task.name }}
@@ -80,7 +80,7 @@ the tab: event_groups / discharged_patients / tomorrow_items.
         <summary>&#9881; Developer</summary>
         <p class="hint">Wipes every patient, task, note, vitals record and
           activity entry. Beds and the task buttons stay. Cannot be undone.</p>
-        <form method="post" action="{% url 'dev_clear' %}"
+        <form method="post" action="{% url 'dev_clear' ward.slug %}"
               onsubmit="return confirm('Delete ALL patient data? This cannot be undone.');">
           {% csrf_token %}
           <input type="password" name="password" placeholder="Developer password"
