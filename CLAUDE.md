@@ -305,13 +305,19 @@ scripts is git-ignored.
 
 ## Deployment - $0 options (`DEPLOY.md`)
 
-Render/Railway/Fly all now want a card; Railway's **trial** is the exception.
-- **A. Railway + Neon** - card-free **trial** (30 days full, then ~$1/mo credit
-  ≈ a few days/mo). Good for a pilot. `railway.json` + `build.sh` + `/healthz/`.
-- **B. Self-host Windows PC + Tailscale Funnel** - **permanent $0, no card**,
+Render/Railway/Fly all now want a card. Options A-D are card-free.
+- **A. PythonAnywhere (recommended)** - **permanent $0, no card**, always awake.
+  Manual clone + `.env` + Manual-config web app + edit the WSGI file; SQLite kept
+  (`BEDTRACKER_ALLOW_SQLITE=true`), `BEDTRACKER_SIMPLE_LOGIN=true`. Not
+  auto-detected, so `BEDTRACKER_ALLOWED_HOSTS=<user>.pythonanywhere.com` must be
+  set. Keep-alive link emailed ~every 3 months. Backup = download `db.sqlite3` or
+  the one free daily scheduled task.
+- **B. Railway + Neon** - card-free **trial** (30 days full, then ~$1/mo credit
+  ≈ a few days/mo). Short pilot only. `railway.json` + `build.sh` + `/healthz/`.
+- **C. Self-host Windows PC + Tailscale Funnel** - permanent $0, no card,
   public HTTPS URL. `waitress-serve`, SQLite kept (`BEDTRACKER_ALLOW_SQLITE=true`).
-- **C. Hospital LAN** - `waitress-serve --host=0.0.0.0`, `ALLOWED_HOSTS=*`, HTTP.
-- **D. Render + Neon** - `render.yaml` still in repo; needs a card on file.
+- **D. Hospital LAN** - `waitress-serve --host=0.0.0.0`, `ALLOWED_HOSTS=*`, HTTP.
+- **E. Render + Neon** - `render.yaml` still in repo; needs a card on file.
 
 `requirements.txt`: `gunicorn` (Linux hosts) + `waitress` (Windows self-host).
 Settings auto-add `RAILWAY_PUBLIC_DOMAIN` / `RENDER_EXTERNAL_HOSTNAME` to
