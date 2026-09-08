@@ -14,22 +14,63 @@ Patients over time (past occupants stay in the table for history), but only
 one Patient is the *current* occupant at any moment.
 """
 
+import secrets
 from datetime import timedelta
 
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
+
+
+def _new_invite_token():
+    """A short, hard-to-guess string for a board's share link."""
+    return secrets.token_urlsafe(9)   # ~12 URL-safe characters
 
 
 class Ward(models.Model):
-    """A hospital ward. For now the app runs with a single ward, but the
-    model allows more so we can expand later without a rewrite."""
+    """A board: one ward's beds, patients and tasks, with its own group of
+    people. Created from the front page; shared by its invite link."""
 
     name = models.CharField(max_length=100)
+
+    # Readable id used in the address bar, e.g. /w/medicine-2/. Filled in
+    # automatically from the name on first save (see save() below).
+    slug = models.SlugField(max_length=60, unique=True)
+
+    # The secret in the share link. Rotating it locks out anyone who only had
+    # the old link.
+    invite_token = models.CharField(
+        max_length=32, unique=True, default=_new_invite_token
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="wards_created",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         # What shows up in the admin site and in shell output.
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name) or "ward"
+            slug, n = base, 2
+            while Ward.objects.exclude(pk=self.pk).filter(slug=slug).exists():
+                slug, n = f"{base}-{n}", n + 1
+            self.slug = slug
+        if not self.invite_token:
+            self.invite_token = _new_invite_token()
+        super().save(*args, **kwargs)
+
+    def rotate_invite_token(self):
+        self.invite_token = _new_invite_token()
+        self.save(update_fields=["invite_token"])
 
     @property
     def occupied_count(self):
@@ -39,6 +80,49 @@ class Ward(models.Model):
     @property
     def bed_count(self):
         return self.beds.count()
+
+
+class WardMembership(models.Model):
+    """Links a person to a board they've joined (via its invite link).
+
+    The board's views check for one of these before showing anything. The
+    person who created the board is the "owner" (can rotate the link and clear
+    the board's data); everyone else is a "member".
+    """
+
+    class Role(models.TextChoices):
+        OWNER = "owner", "Owner"
+        MEMBER = "member", "Member"
+
+    ward = models.ForeignKey(
+        Ward, on_delete=models.CASCADE, related_name="memberships"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ward_memberships",
+    )
+    role = models.CharField(
+        max_length=10, choices=Role.choices, default=Role.MEMBER
+    )
+    # The name this person used when they joined (snapshot for display).
+    display_name = models.CharField(max_length=80, blank=True)
+    joined_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["ward", "display_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["ward", "user"], name="unique_ward_membership"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.display_name or self.user} @ {self.ward}"
+
+    @property
+    def is_owner(self):
+        return self.role == self.Role.OWNER
 
 
 class Bed(models.Model):
@@ -199,6 +283,15 @@ class ActivityEvent(models.Model):
         VITALS_ADDED = "vitals", "Vitals"
         DATA_CLEARED = "cleared_all", "Data cleared"
 
+    # Which board this happened on. Denormalised (also reachable via
+    # patient/bed) so the Ward Activity feed is a single fast query.
+    ward = models.ForeignKey(
+        Ward,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="events",
+    )
     patient = models.ForeignKey(
         Patient,
         on_delete=models.SET_NULL,
@@ -285,6 +378,15 @@ class TaskOption(models.Model):
     category = models.ForeignKey(
         TaskCategory, on_delete=models.CASCADE, related_name="options"
     )
+    # The 13 default buttons are shared by every board (ward is NULL). Buttons a
+    # user adds in the app belong to just that board (ward set, is_custom=True).
+    ward = models.ForeignKey(
+        Ward,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="task_options",
+    )
     label = models.CharField(max_length=80)
     sort_order = models.PositiveIntegerField(default=0)
     is_custom = models.BooleanField(default=False)
@@ -293,7 +395,8 @@ class TaskOption(models.Model):
         ordering = ["sort_order", "label"]
         constraints = [
             models.UniqueConstraint(
-                fields=["category", "label"], name="unique_option_per_category"
+                fields=["category", "label", "ward"],
+                name="unique_option_per_category_ward",
             )
         ]
 
