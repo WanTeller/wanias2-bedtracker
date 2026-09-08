@@ -743,6 +743,94 @@ a.event-row:hover { background: #fbfcfd; }
   margin-top: 0.1rem;
 }
 
+/* ---- share-this-board box (activity sidebar) ---- */
+.share-box {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+.share-box > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  list-style: none;
+}
+.share-box > summary::-webkit-details-marker { display: none; }
+.share-row { display: flex; gap: 0.4rem; margin: 0.5rem 0; }
+.share-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--bg);
+}
+.share-box form { margin-top: 0.25rem; }
+
+/* ---- dashboard (the front page: "your boards") ---- */
+.dash {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+.dash-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.dash-head h1 { font-size: 1.2rem; margin: 0; }
+.dash-user { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+.dash-user .who { font-weight: 600; }
+.dash-user form { margin: 0; }
+.dash-block { margin-bottom: 1.75rem; }
+.dash-block h2 {
+  font-size: 0.95rem;
+  margin: 0 0 0.7rem;
+  color: var(--ink);
+}
+.board-list { list-style: none; margin: 0; padding: 0; display: flex;
+  flex-direction: column; gap: 0.6rem; }
+.board-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--ink);
+}
+.board-card:hover { border-color: var(--accent); }
+.board-name { font-weight: 600; }
+.board-meta { font-size: 0.8rem; color: var(--muted); }
+.board-owner {
+  color: var(--ok);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+.dash-form { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.dash-form input[type="text"] { flex: 1 1 12rem; min-width: 0; }
+.dash-form input[type="number"] { width: 5rem; }
+.dash-form input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+}
+.dash-form input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.join-ward { font-weight: 600; margin: 0.25rem 0 0.75rem; }
+
+@media (max-width: 600px) {
+  .dash-form .btn { width: 100%; }
+}
+
 /* ---- empty states ---- */
 .empty-state { padding: 3rem 1.5rem; max-width: 600px; margin: 0 auto; }
 .empty-state pre {

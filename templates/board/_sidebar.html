@@ -75,6 +75,27 @@ the tab: event_groups / discharged_patients / tomorrow_items.
         {% endfor %}
       {% endif %}
 
+      {% if join_url %}
+      <details class="share-box">
+        <summary>&#128279; Share this board</summary>
+        <p class="hint">Anyone who opens this link can join the board (they
+          enter their name first). Send it to your team.</p>
+        <div class="share-row">
+          <input type="text" readonly value="{{ join_url }}"
+                 onclick="this.select()" aria-label="Share link">
+          <button type="button" class="btn small"
+                  onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText('{{ join_url }}');this.textContent='Copied';">Copy</button>
+        </div>
+        {% if is_owner %}
+        <form method="post" action="{% url 'rotate_link' ward.slug %}"
+              onsubmit="return confirm('Generate a new link? The current link will stop working for anyone who has not joined yet.');">
+          {% csrf_token %}
+          <button type="submit" class="btn small danger">Reset link</button>
+        </form>
+        {% endif %}
+      </details>
+      {% endif %}
+
       {% if dev_clear_enabled %}
       <details class="dev-tools">
         <summary>&#9881; Developer</summary>

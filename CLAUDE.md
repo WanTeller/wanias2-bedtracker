@@ -111,13 +111,19 @@ own share link (like a Google Sheet). Staged:
   the one existing board in and makes every current account a member.
 - **Stage 2 done** – board moved to `/w/<slug>/`; `@ward_view` decorator
   resolves the board from the slug and checks membership (non-member → 403
-  `board/not_a_member.html`); `/` → `views.home` (redirects to your board;
-  **transitional**: auto-joins the sole board during the pilot). All board
-  `{% url %}` calls carry `ward.slug`. `services.clear_ward_patient_data(ward)`
-  replaces the global wipe.
-- Stage 3 (next): real "your boards" dashboard at `/`, create-a-board form,
-  join-by-link view. Stage 4: per-board buttons finish + owner-gated dev clear.
-  Stage 5: switch-board UI, mobile, PWA, docs.
+  `board/not_a_member.html`). All board `{% url %}` calls carry `ward.slug`.
+  `services.clear_ward_patient_data(ward)` replaces the global wipe.
+- **Stage 3 done** – `/` is the "your boards" dashboard (`board/dashboard.html`,
+  `views.home`). `views.board_new` (`/boards/new/`, `BoardForm` = name +
+  bed_count) creates a board + its beds + an owner `WardMembership`.
+  `views.join` (`/join/<token>/`) shows a confirm page then adds a member
+  `WardMembership`; `views.join_paste` (`/boards/join/`) parses a pasted
+  link/code and forwards to it. `views.rotate_link` (owner-only) makes a fresh
+  invite token. Activity sidebar has a "Share this board" `<details>` with the
+  join link + Copy + (owner) Reset link. Auto-join is gone - a name-only login
+  with no membership just sees the dashboard. CSS `?v=17`, SW cache `v2`.
+- Stage 4 (next): per-board custom buttons finish + owner-gate the dev clear.
+  Stage 5: switch-board polish, mobile pass, PWA start_url, docs.
 
 Remaining after that: hosting (see the end of this file).
 
@@ -142,7 +148,7 @@ Structure:
   sample patients/tasks, a demo login `demo@ward.local` / `demo-pass-1234`, and
   a `WardMembership` making the demo user the board's owner.
 - `python manage.py seed_categories` - 13 categories + shared preset buttons.
-- `python manage.py test` - 50 tests.
+- `python manage.py test` - 57 tests.
 - **Testing mode**: set `BEDTRACKER_SIMPLE_LOGIN=true` (env or `.env`) for
   name-only login. See the "Testing mode" section below. `.env.example` lists
   every `BEDTRACKER_*` var.

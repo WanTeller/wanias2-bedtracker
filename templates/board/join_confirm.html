@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Join {{ ward.name }} &middot; {{ app_name }}{% endblock %}
+
+{% block content %}
+<main class="auth-page">
+  <div class="auth-card">
+    <h1>{{ app_name }}</h1>
+    <h2>Join this board?</h2>
+
+    <p class="join-ward">{{ ward.name }} &middot; {{ ward.bed_count }} beds</p>
+    <p class="hint">You'll join as
+      <strong>{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email }}</strong>.
+      Your name will show on anything you change.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn primary">Join {{ ward.name }}</button>
+    </form>
+    <p class="field-help"><a href="{% url 'home' %}">Not now</a></p>
+  </div>
+</main>
+{% endblock %}

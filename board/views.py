@@ -24,7 +24,7 @@ from django.utils import timezone
 from django.utils.timezone import localdate, localtime
 from django.views.decorators.http import require_POST
 
-from .forms import PatientForm, VitalsForm
+from .forms import BoardForm, PatientForm, VitalsForm
 from .models import (
     ActivityEvent, Bed, Note, Patient, Task, TaskCategory, TaskOption,
     VitalsEntry, Ward, WardMembership,
@@ -50,20 +50,58 @@ def healthz(request):
 # --------------------------------------------------------------------------- #
 
 def home(request):
-    """Where '/' goes. Stage 3 makes this a real 'your boards' dashboard; for
-    now it just sends you to your board."""
+    """The front page: the boards you belong to, plus 'create' and 'join'."""
     memberships = list(
-        request.user.ward_memberships.select_related("ward").order_by("-joined_at")
+        request.user.ward_memberships.select_related("ward").order_by(
+            "-joined_at"
+        )
     )
-    if memberships:
-        return redirect("board", slug=memberships[0].ward.slug)
+    return render(
+        request,
+        "board/dashboard.html",
+        {"memberships": memberships, "join_error": request.GET.get("bad")},
+    )
 
-    wards = list(Ward.objects.order_by("id"))
-    if len(wards) == 1:
-        # Transitional: during the pilot there is one shared board and anyone
-        # who signs in should land on it. Stage 3 replaces this with a
-        # dashboard + an explicit "join with a link" step.
-        ward = wards[0]
+
+def _join_url(request, ward):
+    """The absolute share link for a board."""
+    return request.build_absolute_uri(reverse("join", args=[ward.invite_token]))
+
+
+def board_new(request):
+    """Create a board. The creator becomes its owner."""
+    form = BoardForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            ward = form.save(commit=False)
+            ward.created_by = request.user
+            ward.save()
+            Bed.objects.bulk_create(
+                [Bed(ward=ward, number=n)
+                 for n in range(1, form.cleaned_data["bed_count"] + 1)]
+            )
+            WardMembership.objects.create(
+                ward=ward,
+                user=request.user,
+                role=WardMembership.Role.OWNER,
+                display_name=services.actor_name(request.user),
+            )
+        messages.success(
+            request,
+            f"Board “{ward.name}” created. Its share link is in the activity "
+            f"panel (the ☰ menu) - send it to your team.",
+        )
+        return redirect("board", slug=ward.slug)
+
+    return render(request, "board/board_new.html", {"form": form})
+
+
+def join(request, token):
+    """Open a board's invite link: confirm, then add the user as a member."""
+    ward = get_object_or_404(Ward, invite_token=token)
+    already = WardMembership.objects.filter(ward=ward, user=request.user).exists()
+
+    if request.method == "POST" and not already:
         WardMembership.objects.get_or_create(
             ward=ward,
             user=request.user,
@@ -72,9 +110,30 @@ def home(request):
                 "display_name": services.actor_name(request.user),
             },
         )
+        messages.success(request, f"You've joined “{ward.name}”.")
+        already = True
+
+    if already:
         return redirect("board", slug=ward.slug)
 
-    return render(request, "board/no_ward.html")
+    return render(request, "board/join_confirm.html", {"ward": ward})
+
+
+@require_POST
+def join_paste(request):
+    """The dashboard's 'paste a link' box. Accepts a full link or a bare code."""
+    raw = (request.POST.get("code") or "").strip()
+    token = raw.rstrip("/").split("/")[-1] if raw else ""
+
+    ward = None
+    if token:
+        ward = (
+            Ward.objects.filter(invite_token=token).first()
+            or Ward.objects.filter(slug=token).first()
+        )
+    if ward is None:
+        return redirect(reverse("home") + "?bad=1")
+    return redirect("join", token=ward.invite_token)
 
 
 # --------------------------------------------------------------------------- #
@@ -496,6 +555,8 @@ def activity_view(request, ward):
         "sidebar_open": True,
         "sidebar_tab": tab,
         "dev_clear_enabled": bool(settings.DEV_CLEAR_PASSWORD),
+        "is_owner": request.membership.is_owner,
+        "join_url": _join_url(request, ward),
         "query": "",
         "search": None,
     }
@@ -524,6 +585,18 @@ def activity_view(request, ward):
         context["event_groups"] = _group_events_by_day(events)
 
     return render(request, "board/board.html", context)
+
+
+@ward_view
+@require_POST
+def rotate_link(request, ward):
+    """Owner-only: generate a fresh share link (the old one stops working)."""
+    if request.membership.is_owner:
+        ward.rotate_invite_token()
+        messages.success(
+            request, "New share link generated. The old link no longer works."
+        )
+    return redirect("activity", slug=ward.slug)
 
 
 @ward_view

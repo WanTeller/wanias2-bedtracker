@@ -8,7 +8,28 @@ just list the fields we want on screen.
 
 from django import forms
 
-from .models import Patient, VitalsEntry
+from .models import Patient, VitalsEntry, Ward
+
+
+class BoardForm(forms.ModelForm):
+    """Create-a-board form: a name and how many beds."""
+
+    bed_count = forms.IntegerField(
+        label="Number of beds", min_value=1, max_value=200, initial=44,
+    )
+
+    class Meta:
+        model = Ward
+        fields = ["name"]
+        labels = {"name": "Board name"}
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"placeholder": "e.g. Medicine-2", "autocomplete": "off"}
+            ),
+        }
+
+    def clean_name(self):
+        return " ".join(self.cleaned_data["name"].split())
 
 
 class PatientForm(forms.ModelForm):

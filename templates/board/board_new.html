@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}New board &middot; {{ app_name }}{% endblock %}
+
+{% block content %}
+<main class="auth-page">
+  <div class="auth-card">
+    <h1>{{ app_name }}</h1>
+    <h2>Create a board</h2>
+
+    <form method="post" action="{% url 'board_new' %}">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="field">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.errors %}
+        <ul class="field-error">
+          {% for e in field.errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn primary">Create board</button>
+    </form>
+
+    <p class="field-help"><a href="{% url 'home' %}">Back to your boards</a></p>
+  </div>
+</main>
+{% endblock %}

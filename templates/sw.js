@@ -2,9 +2,9 @@
 /* Minimal service worker: makes the app installable and serves the cached
    shell + static assets when the network is unavailable. HTML pages are always
    fetched fresh (network-first) so clinical data is never stale. */
-const CACHE = "bedtracker-v1";
+const CACHE = "bedtracker-v2";
 const SHELL = [
-  "{% static 'board.css' %}?v=16",
+  "{% static 'board.css' %}?v=17",
   "{% static 'htmx.min.js' %}",
   "{% static 'icon.svg' %}",
 ];

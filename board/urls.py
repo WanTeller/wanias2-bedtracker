@@ -11,12 +11,16 @@ from . import views
 urlpatterns = [
     path("healthz/", views.healthz, name="healthz"),
 
-    # Front page. Stage 3 turns this into a "your boards" dashboard.
+    # Front page: "your boards" dashboard.
     path("", views.home, name="home"),
+    path("boards/new/", views.board_new, name="board_new"),
+    path("boards/join/", views.join_paste, name="join_paste"),
+    path("join/<str:token>/", views.join, name="join"),
 
     # --- one board, everything scoped under its slug ---------------------- #
     path("w/<slug:slug>/", views.board_view, name="board"),
     path("w/<slug:slug>/activity/", views.activity_view, name="activity"),
+    path("w/<slug:slug>/rotate-link/", views.rotate_link, name="rotate_link"),
     path("w/<slug:slug>/dev/clear/", views.dev_clear, name="dev_clear"),
 
     # patient

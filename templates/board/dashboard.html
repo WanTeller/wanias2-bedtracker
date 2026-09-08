@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="dash">
+  <header class="dash-head">
+    <h1>{{ app_name }}</h1>
+    <div class="dash-user">
+      <span class="who">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email }}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+        <button type="submit" class="linkbtn">{% if simple_login %}Switch name{% else %}Log out{% endif %}</button>
+      </form>
+    </div>
+  </header>
+
+  <section class="dash-block">
+    <h2>Your boards</h2>
+    {% if memberships %}
+    <ul class="board-list">
+      {% for m in memberships %}
+      <li>
+        <a class="board-card" href="{% url 'board' m.ward.slug %}">
+          <span class="board-name">{{ m.ward.name }}</span>
+          <span class="board-meta">
+            {{ m.ward.bed_count }} beds
+            {% if m.is_owner %}&middot; <span class="board-owner">owner</span>{% endif %}
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="hint">You're not on any board yet. Create one below, or paste a
+      share link someone sent you.</p>
+    {% endif %}
+  </section>
+
+  <section class="dash-block">
+    <h2>Create a board</h2>
+    <form method="post" action="{% url 'board_new' %}" class="dash-form">
+      {% csrf_token %}
+      <input type="text" name="name" placeholder="Board name (e.g. Medicine-2)"
+             autocomplete="off" required>
+      <input type="number" name="bed_count" value="44" min="1" max="200"
+             aria-label="Number of beds" title="Number of beds">
+      <button type="submit" class="btn primary">Create</button>
+    </form>
+  </section>
+
+  <section class="dash-block">
+    <h2>Join with a link</h2>
+    <form method="post" action="{% url 'join_paste' %}" class="dash-form">
+      {% csrf_token %}
+      <input type="text" name="code" autocomplete="off" required
+             placeholder="Paste the share link or code">
+      <button type="submit" class="btn">Join</button>
+    </form>
+    {% if join_error %}
+    <p class="field-error">That link or code didn't match a board. Check it and
+      try again.</p>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

@@ -122,12 +122,68 @@ class MultiBoardTests(TestCase):
         self.ward_b = make_ward("Ward B", owner=self.bob)
         self.bed_a = Bed.objects.create(ward=self.ward_a, number=1)
 
-    def test_home_sends_a_member_to_their_board(self):
+    def test_dashboard_lists_only_your_boards(self):
         self.client.force_login(self.alice)
         r = self.client.get(reverse("home"))
-        self.assertRedirects(
-            r, reverse("board", args=[self.ward_a.slug]), target_status_code=200
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Ward A")
+        self.assertNotContains(r, "Ward B")
+
+    def test_create_board_makes_beds_and_an_owner_membership(self):
+        self.client.force_login(self.alice)
+        r = self.client.post(reverse("board_new"),
+                             {"name": "Medicine 2", "bed_count": 6})
+        ward = Ward.objects.get(name="Medicine 2")
+        self.assertRedirects(r, reverse("board", args=[ward.slug]))
+        self.assertEqual(ward.beds.count(), 6)
+        self.assertEqual(ward.slug, "medicine-2")
+        m = WardMembership.objects.get(ward=ward, user=self.alice)
+        self.assertTrue(m.is_owner)
+        self.assertEqual(ward.created_by, self.alice)
+
+    def test_join_link_adds_membership_then_opens_the_board(self):
+        self.client.force_login(self.bob)
+        url = reverse("join", args=[self.ward_a.invite_token])
+        self.assertEqual(self.client.get(url).status_code, 200)   # confirm page
+        r = self.client.post(url)
+        self.assertRedirects(r, reverse("board", args=[self.ward_a.slug]))
+        self.assertTrue(
+            WardMembership.objects.filter(ward=self.ward_a, user=self.bob).exists()
         )
+
+    def test_join_when_already_a_member_just_opens_the_board(self):
+        self.client.force_login(self.alice)
+        r = self.client.get(reverse("join", args=[self.ward_a.invite_token]))
+        self.assertRedirects(r, reverse("board", args=[self.ward_a.slug]))
+
+    def test_join_paste_accepts_a_full_link(self):
+        self.client.force_login(self.bob)
+        link = f"https://example.test/join/{self.ward_a.invite_token}/"
+        r = self.client.post(reverse("join_paste"), {"code": link})
+        self.assertRedirects(
+            r, reverse("join", args=[self.ward_a.invite_token]),
+            target_status_code=200,
+        )
+
+    def test_join_paste_with_a_bad_code_returns_to_dashboard(self):
+        self.client.force_login(self.bob)
+        r = self.client.post(reverse("join_paste"), {"code": "nonsense"})
+        self.assertEqual(r["Location"], reverse("home") + "?bad=1")
+
+    def test_owner_can_reset_the_share_link(self):
+        self.client.force_login(self.alice)
+        old = self.ward_a.invite_token
+        self.client.post(reverse("rotate_link", args=[self.ward_a.slug]))
+        self.ward_a.refresh_from_db()
+        self.assertNotEqual(self.ward_a.invite_token, old)
+
+    def test_member_cannot_reset_the_share_link(self):
+        WardMembership.objects.create(ward=self.ward_a, user=self.bob)
+        self.client.force_login(self.bob)
+        old = self.ward_a.invite_token
+        self.client.post(reverse("rotate_link", args=[self.ward_a.slug]))
+        self.ward_a.refresh_from_db()
+        self.assertEqual(self.ward_a.invite_token, old)
 
     def test_non_member_cannot_open_a_board(self):
         self.client.force_login(self.bob)
@@ -530,14 +586,15 @@ class SimpleLoginTests(TestCase):
         self.assertEqual(r.status_code, 302)
 
     @override_settings(SIMPLE_LOGIN=True)
-    def test_new_name_lands_on_the_only_board(self):
-        """A brand-new tester is auto-joined to the single pilot board."""
-        ward = make_ward("Surgical Unit 2")
+    def test_new_name_lands_on_the_dashboard(self):
+        """A brand-new tester sees the 'your boards' page (no board yet)."""
+        make_ward("Surgical Unit 2")   # exists, but they're not a member
         r = self.client.post(reverse("simple_login"), {"name": "Newbie"}, follow=True)
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(
+        self.assertContains(r, "Your boards")
+        self.assertFalse(
             WardMembership.objects.filter(
-                ward=ward, user__username="newbie.test@simple.local"
+                user__username="newbie.test@simple.local"
             ).exists()
         )
 
