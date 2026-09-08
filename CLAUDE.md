@@ -122,8 +122,12 @@ own share link (like a Google Sheet). Staged:
   invite token. Activity sidebar has a "Share this board" `<details>` with the
   join link + Copy + (owner) Reset link. Auto-join is gone - a name-only login
   with no membership just sees the dashboard. CSS `?v=17`, SW cache `v2`.
-- Stage 4 (next): per-board custom buttons finish + owner-gate the dev clear.
-  Stage 5: switch-board polish, mobile pass, PWA start_url, docs.
+- **Stage 4 done** – the "Clear all patient data" control is now owner-only
+  (`membership.is_owner` AND the password) and the whole Developer `<details>`
+  is hidden from non-owners; `seed_categories` and `services.toggle_slot` are
+  explicit that shared presets are `ward=NULL`.
+- Stage 5 (next): switch-board polish, mobile pass, PWA start_url, docs
+  (`DEPLOY.md` scale note, `HOW-TO-RUN.md`).
 
 Remaining after that: hosting (see the end of this file).
 
@@ -148,7 +152,7 @@ Structure:
   sample patients/tasks, a demo login `demo@ward.local` / `demo-pass-1234`, and
   a `WardMembership` making the demo user the board's owner.
 - `python manage.py seed_categories` - 13 categories + shared preset buttons.
-- `python manage.py test` - 57 tests.
+- `python manage.py test` - 59 tests.
 - **Testing mode**: set `BEDTRACKER_SIMPLE_LOGIN=true` (env or `.env`) for
   name-only login. See the "Testing mode" section below. `.env.example` lists
   every `BEDTRACKER_*` var.

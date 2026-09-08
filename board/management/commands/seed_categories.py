@@ -64,11 +64,14 @@ class Command(BaseCommand):
                     "pair_group": pair,
                 },
             )
-            # Sync the PERMANENT presets (is_custom=False) to the list above.
-            category.options.filter(is_custom=False).exclude(label__in=presets).delete()
+            # Sync the PERMANENT presets: shared across every board (ward=NULL),
+            # is_custom=False. Never touches a board's own custom buttons.
+            category.options.filter(
+                is_custom=False, ward__isnull=True
+            ).exclude(label__in=presets).delete()
             for i, label in enumerate(presets):
                 TaskOption.objects.update_or_create(
-                    category=category, label=label,
+                    category=category, label=label, ward=None,
                     defaults={"sort_order": i, "is_custom": False},
                 )
 

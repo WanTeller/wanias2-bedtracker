@@ -220,6 +220,26 @@ class MultiBoardTests(TestCase):
         )
         self.assertNotContains(r, "Board A special")
 
+    def test_only_the_owner_can_clear_a_board(self):
+        WardMembership.objects.create(ward=self.ward_a, user=self.bob)  # member
+        Patient.objects.create(bed=self.bed_a, name="Still here")
+        self.client.force_login(self.bob)
+        self.client.post(
+            reverse("dev_clear", args=[self.ward_a.slug]),
+            {"password": settings.DEV_CLEAR_PASSWORD},
+        )
+        self.assertTrue(Patient.objects.filter(name="Still here").exists())
+
+    def test_member_does_not_see_the_developer_section(self):
+        WardMembership.objects.create(ward=self.ward_a, user=self.bob)
+        self.client.force_login(self.bob)
+        r = self.client.get(reverse("activity", args=[self.ward_a.slug]))
+        self.assertNotContains(r, "Clear all patient data")
+        # ...but the owner does
+        self.client.force_login(self.alice)
+        r = self.client.get(reverse("activity", args=[self.ward_a.slug]))
+        self.assertContains(r, "Clear all patient data")
+
     def test_clearing_one_board_leaves_the_other_untouched(self):
         Patient.objects.create(bed=self.bed_a, name="On A")
         bed_b = Bed.objects.create(ward=self.ward_b, number=1)
@@ -392,7 +412,7 @@ class NotesVitalsTomorrowTests(TestCase):
     def setUp(self):
         self.user = make_user()
         self.client.force_login(self.user)
-        self.ward = make_ward(members=[self.user])
+        self.ward = make_ward(owner=self.user)   # owner: can use the dev clear
         self.bed = Bed.objects.create(ward=self.ward, number=1)
         self.patient = Patient.objects.create(bed=self.bed, name="NV Patient")
         self.headers = {"HTTP_HX_REQUEST": "true"}

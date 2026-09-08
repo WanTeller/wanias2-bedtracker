@@ -554,7 +554,9 @@ def activity_view(request, ward):
         "confirm_discharge": False,
         "sidebar_open": True,
         "sidebar_tab": tab,
-        "dev_clear_enabled": bool(settings.DEV_CLEAR_PASSWORD),
+        "dev_clear_enabled": (
+            bool(settings.DEV_CLEAR_PASSWORD) and request.membership.is_owner
+        ),
         "is_owner": request.membership.is_owner,
         "join_url": _join_url(request, ward),
         "query": "",
@@ -602,9 +604,9 @@ def rotate_link(request, ward):
 @ward_view
 @require_POST
 def dev_clear(request, ward):
-    """Developer-only: wipe this board's patient data. Guarded by a password set
-    in settings (BEDTRACKER_DEV_CLEAR_PASSWORD). Lives only in the sidebar."""
-    if not settings.DEV_CLEAR_PASSWORD:
+    """Owner-only: wipe this board's patient data. Also guarded by a password
+    set in settings (BEDTRACKER_DEV_CLEAR_PASSWORD). Lives only in the sidebar."""
+    if not settings.DEV_CLEAR_PASSWORD or not request.membership.is_owner:
         return redirect("activity", slug=ward.slug)
 
     if request.POST.get("password") == settings.DEV_CLEAR_PASSWORD:

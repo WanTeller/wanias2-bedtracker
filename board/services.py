@@ -161,9 +161,21 @@ def toggle_slot(patient, category, actor=None):
     elif (
         category.key != "unassigned"
         and not category.allow_custom
-        and not category.options.exists()
+        and not _slot_has_buttons(category, patient)
     ):
+        # An empty single-item slot (e.g. Receiving Notes): tick = create it.
         add_task(patient, category, category.name, actor=actor)
+
+
+def _slot_has_buttons(category, patient):
+    """Whether this slot shows any preset buttons on this patient's board
+    (shared defaults + that board's own custom buttons)."""
+    from django.db.models import Q
+
+    ward_id = patient.bed.ward_id if patient.bed_id else None
+    return category.options.filter(
+        Q(is_custom=False) | Q(ward_id=ward_id)
+    ).exists()
 
 
 # --------------------------------------------------------------------------- #
