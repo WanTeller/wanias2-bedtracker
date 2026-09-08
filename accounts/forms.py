@@ -67,8 +67,10 @@ class SimpleLoginForm(forms.Form):
     """Testing mode only: just a name, no email/password."""
     name = forms.CharField(
         label="Your name", max_length=120,
+        help_text="Use your first name and last initial (e.g. “Wania K.”) "
+                  "so two people with the same first name don't clash.",
         widget=forms.TextInput(attrs={"autofocus": True,
-                                      "placeholder": "e.g. Wania Khan"}),
+                                      "placeholder": "e.g. Wania K."}),
     )
 
     def clean_name(self):

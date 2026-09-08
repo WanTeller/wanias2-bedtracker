@@ -1,7 +1,7 @@
 {% load static %}{
   "name": "WaniaS2 BedTracker",
   "short_name": "BedTracker",
-  "description": "Surgical Unit 2 ward board",
+  "description": "Shared ward board - track beds, tasks and labs",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

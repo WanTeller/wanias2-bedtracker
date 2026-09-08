@@ -18,6 +18,24 @@ Because the board holds no confidential data, Options A, C and D use the app's
 simple built-in storage (a single file) and the **name-only login**
 (`BEDTRACKER_SIMPLE_LOGIN=true`). Options B and E use a managed database.
 
+## Multiple boards & how many people
+
+The app is multi-board: after signing in with a name, each person lands on
+**"Your boards"**. Anyone can **Create a board** (a name + a bed count); it gets
+a **share link** (in the board's ☰ menu → "Share this board"). People with that
+link join that board; boards are otherwise invisible to each other. The board's
+creator is its **owner** (can reset the share link and clear the board's data).
+
+Scale for the pilot: the single-file storage (Options A/C/D) comfortably
+handles the ~15-25 people active on a board at once. Across many boards and
+~100+ signed-up people it should still be fine for a feedback pilot, because
+writes are short and rarely simultaneous. If boards feel sluggish under load,
+move to **Option B** (a managed database) — no data is lost in the move.
+
+Name-only login means two people typing the same first name share one identity
+in the activity log; the name box suggests "Firstname L." to reduce clashes.
+Switch to email logins (`BEDTRACKER_SIMPLE_LOGIN=false`) when that matters.
+
 ---
 
 ## Option A — PythonAnywhere (recommended: permanent $0, no card)

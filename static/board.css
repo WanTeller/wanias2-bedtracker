@@ -61,6 +61,8 @@ h2 { font-size: 1.15rem; margin: 0; }
 }
 .topbar-left { display: flex; align-items: center; gap: 0.9rem; }
 .hamburger { font-size: 1.3rem; color: var(--muted); text-decoration: none; }
+.switch-board { color: var(--muted); text-decoration: underline; }
+.switch-board:hover { color: var(--ink); }
 .topbar-user {
   display: flex;
   align-items: center;
@@ -828,7 +830,11 @@ a.event-row:hover { background: #fbfcfd; }
 .join-ward { font-weight: 600; margin: 0.25rem 0 0.75rem; }
 
 @media (max-width: 600px) {
+  .dash { padding: 1.25rem 0.9rem 4rem; }
   .dash-form .btn { width: 100%; }
+  .dash-form input[type="number"] { width: 100%; }
+  .share-row { flex-wrap: wrap; }
+  .share-row .btn { width: 100%; }
 }
 
 /* ---- empty states ---- */

@@ -122,5 +122,8 @@ python manage.py seed_demo --reset
   user & login registry in `/admin/`, optimistic-locking + DB constraints +
   row locking for safe simultaneous use, "who did it" on every activity event,
   and an independent local backup system (`backup/`).
-- [ ] **Later** — deploy to a free-tier host + PostgreSQL (see the end of
-  CLAUDE.md); optional Google sign-in; hospital-system lab integration.
+- [x] **Multi-board** — many independent boards, each created from the front
+  page and shared by an invite link (`/join/<token>/`); board members only;
+  the creator is the owner. `/w/<slug>/` addresses; `/` is "Your boards".
+- [ ] **Later** — deploy to a free-tier host (see [DEPLOY.md](DEPLOY.md));
+  optional Google sign-in; hospital-system lab integration.

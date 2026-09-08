@@ -69,10 +69,21 @@ Quit the server with CTRL-BREAK.
 ## Part 5 — Use it
 
 - Open a web browser and go to: **http://localhost:8000**
-- You'll see the **Enter your name to continue** screen.
-- Type a name, click **Enter Ward Board**. That's it.
-- Each tester does the same on their own device/browser with their own name.
-  Their name shows up in the History and Ward Activity records.
+- You'll see the **Enter your name to continue** screen. Type a name, click
+  **Enter Ward Board**.
+- Next you'll see **Your boards**. A board is one ward's list of beds.
+  - **The first person** clicks **Create a board**, types a name
+    (e.g. "Surgery-1") and a bed count, and clicks **Create**.
+  - That board has a **share link** — open the ☰ menu (top-left) →
+    **Share this board** → **Copy**. Send that link to the other testers.
+  - **Everyone else** pastes that link into the **Join with a link** box on
+    the Your boards page (or just opens the link) and clicks **Join**.
+- Everyone on the same board sees the same beds and tasks, live. Each person's
+  name shows in the History and Ward Activity records.
+- (Part 3 also makes a sample board **Surgical Unit 2** with practice patients.
+  To use *that* one instead of a fresh board: log in at
+  **http://localhost:8000/accounts/password-login/** as
+  `demo@ward.local` / `demo-pass-1234`, then share its link from the ☰ menu.)
 
 ---
 

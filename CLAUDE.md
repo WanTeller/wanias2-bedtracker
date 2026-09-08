@@ -126,10 +126,17 @@ own share link (like a Google Sheet). Staged:
   (`membership.is_owner` AND the password) and the whole Developer `<details>`
   is hidden from non-owners; `seed_categories` and `services.toggle_slot` are
   explicit that shared presets are `ward=NULL`.
-- Stage 5 (next): switch-board polish, mobile pass, PWA start_url, docs
-  (`DEPLOY.md` scale note, `HOW-TO-RUN.md`).
+- **Stage 5 done** – "Switch board" link styled; dashboard / share-row mobile
+  CSS (`?v=18`, SW `v3`); manifest `description` generalised (`start_url` `/`
+  = the dashboard, already right); dead `board/no_ward.html` removed;
+  name-only login field now asks for "Firstname L." with help text to reduce
+  same-name clashes; `DEPLOY.md` gains a "Multiple boards & how many people"
+  section; `HOW-TO-RUN.md` Part 5 covers create/share/join.
 
-Remaining after that: hosting (see the end of this file).
+**Multi-board conversion complete (2026-09-09).** 59 tests. The app now hosts
+many independent boards, each shared by an invite link.
+
+Remaining: hosting (see the end of this file).
 
 Structure:
 - Django project `config/`, apps `board/` (the ward board) and `accounts/`
